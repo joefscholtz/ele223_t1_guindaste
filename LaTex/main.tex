@@ -10,6 +10,12 @@
 \graphicspath{{images}}
 \usepackage{adjustbox}
 
+\usepackage{tikz}
+\usepackage{tikz-3dplot}
+\usetikzlibrary{arrows.meta}
+\usepackage{float}
+\usepackage{adjustbox}
+
 \newtheorem{lema}{Lema}
 \newcommand{\R}{\mathds{R}}
 
@@ -25,16 +31,109 @@
 \maketitle
 \thispagestyle{empty}\pagestyle{empty}
 
-% \begin{abstract} % O abstract não deve exceder 100 palavras
-% Resumo aqui!
-% \end{abstract} % O abstract não deve exceder 100 palavras
+\begin{abstract} % O abstract não deve exceder 100 palavras
+Resumo aqui!
+\end{abstract} % O abstract não deve exceder 100 palavras
 
-% \begin{IEEEkeywords}
-% Álgebra Linear, Sistemas Lineares, Matriz Inversa, Determinante, Campo, Espaço Vetorial, Dependência Linear.
-% \end{IEEEkeywords}
+\begin{IEEEkeywords}
+Álgebra Linear, Sistemas Lineares, Matriz Inversa, Determinante, Campo, Espaço Vetorial, Dependência Linear.
+\end{IEEEkeywords}
 
-% \section{Introdução}
-% Técnicas de visão computacional vem sendo amplamente utilizadas para desenvolver sistemas autônomos utilizando VANTs \cite{7500600, 7500671}...
+\section{Introdução}
+Técnicas de visão computacional vem sendo amplamente utilizadas para desenvolver sistemas autônomos utilizando VANTs \cite{meyer2000matrix}.
+
+\tdplotsetmaincoords{75}{115}
+\begin{figure}[H]
+\begin{adjustbox}{width=\linewidth}
+  \begin{tikzpicture}[tdplot_main_coords, line join=round, line cap=round]
+
+      % --- Custom Macro to draw a 3D Box ---
+      % Usage: \drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
+      \newcommand{\drawbox}[7]{%
+        \def\X{#1} \def\Y{#2} \def\Z{#3}
+        \def\dX{#4} \def\dY{#5} \def\dZ{#6}
+        \colorlet{boxcol}{#7} 
+        
+        % BACK FACES (Drawn first so they are hidden by front faces)
+        % Bottom face
+        \draw[fill=boxcol!30!black, draw=black!80, thin] 
+          (\X, \Y, \Z) -- (\X+\dX, \Y, \Z) -- (\X+\dX, \Y+\dY, \Z) -- (\X, \Y+\dY, \Z) -- cycle;
+        % -X face
+        \draw[fill=boxcol!40!black, draw=black!80, thin] 
+          (\X, \Y, \Z) -- (\X, \Y+\dY, \Z) -- (\X, \Y+\dY, \Z+\dZ) -- (\X, \Y, \Z+\dZ) -- cycle;
+        % -Y face
+        \draw[fill=boxcol!50!black, draw=black!80, thin] 
+          (\X, \Y, \Z) -- (\X+\dX, \Y, \Z) -- (\X+\dX, \Y, \Z+\dZ) -- (\X, \Y, \Z+\dZ) -- cycle;
+          
+        % FRONT FACES (Drawn last to cover the back faces)
+        % +X face (Faces front-left in this projection)
+        \draw[fill=boxcol!70!white, draw=black!80, thin] 
+          (\X+\dX, \Y, \Z) -- (\X+\dX, \Y+\dY, \Z) -- (\X+\dX, \Y+\dY, \Z+\dZ) -- (\X+\dX, \Y, \Z+\dZ) -- cycle;
+        % +Y face (Faces front-right in this projection)
+        \draw[fill=boxcol, draw=black!80, thin] 
+          (\X, \Y+\dY, \Z) -- (\X+\dX, \Y+\dY, \Z) -- (\X+\dX, \Y+\dY, \Z+\dZ) -- (\X, \Y+\dY, \Z+\dZ) -- cycle;
+        % +Z face (Faces top)
+        \draw[fill=boxcol!40!white, draw=black!80, thin] 
+          (\X, \Y, \Z+\dZ) -- (\X+\dX, \Y, \Z+\dZ) -- (\X+\dX, \Y+\dY, \Z+\dZ) -- (\X, \Y+\dY, \Z+\dZ) -- cycle;
+      }
+
+      % --- Variables for robot position ---
+      \def\MaxXpos{5} % Max x value
+      \def\Xpos{2.5}  % Position along X-axis
+      \def\MaxYpos{5} % Max x value
+      \def\Ypos{2.0}  % Position along Y-axis
+      \def\MaxZpos{5} % Max x value
+      \def\Zpos{1.2}  % Position along Z-axis
+
+      % --- Global Reference ---
+      \def\ArrowType{{-Stealth[scale=1.5]}}
+      \draw[dashed,black] (0,0,0) -- (-4,0,0);
+      \draw[dashed,black] (0,0,0) -- (0,-3,0);
+      \draw[dashed,black] (0,0,0) -- (0,0,-2);
+
+      % --- Trilho ---
+      %\drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
+      \def\TrilhoDx{0.5}
+      \def\TrilhoLy{0.4}
+      \def\TrilhoLz{0.15}
+      \drawbox{-\TrilhoDx}{-\TrilhoLy*0.5}{-\TrilhoLz}{\MaxXpos+2*\TrilhoDx}{\TrilhoLy}{\TrilhoLz}{black!60}
+      \drawbox{-\TrilhoDx}{\MaxYpos-\TrilhoLy*0.5}{-\TrilhoLz}{\MaxXpos+2*\TrilhoDx}{\TrilhoLy}{\TrilhoLz}{black!60}
+
+      % --- Global Reference ---
+      \def\ArrowType{{-Stealth[scale=1.5]}}
+      \draw[thick,\ArrowType, black] (0,0,0) -- (8,0,0) node[anchor=north east]{$X$};
+      \draw[thick,\ArrowType, black] (0,0,0) -- (0,6,0) node[anchor=north west]{$Y$};
+      \draw[thick,\ArrowType, black] (0,0,0) -- (0,0,2) node[anchor=south]{$Z$};
+
+      % --- Ponte ---
+      %\drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
+      \def\PonteLx{0.8}
+      \def\PonteDy{0.2}
+      \def\PonteLz{0.15}
+      % \drawbox{\Xpos-0.5*\PonteLx}{-\PonteDy}{0}{\PonteLx}{\MaxYpos+2*\PonteDy}{\PonteLz}{black!60}
+      \drawbox{\Xpos-0.5*\PonteLx}{-\PonteDy}{0}{\PonteLx}{\Ypos+\PonteDy}{\PonteLz}{black!60}
+
+      % --- Carro ---
+      %\drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
+      \def\CarroLx{1.2}
+      \def\CarroLy{0.8}
+      \def\CarroLz{0.4}
+      \drawbox{\Xpos-0.5*\CarroLx}{\Ypos-0.5*\CarroLy}{0}{\CarroLx}{\CarroLy}{\CarroLz}{black!60}
+
+      % --- Ponte ---
+      %\drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
+      \drawbox{\Xpos-0.5*\PonteLx}{\Ypos+0.5*\CarroLy}{0}{\PonteLx}{\MaxYpos-\Ypos-\CarroLy*0.5+\PonteDy}{\PonteLz}{black!60}
+
+      % --- Local Reference ---
+      \def\ArrowType{{-Stealth[scale=1.5]}}
+      \draw[thick,\ArrowType, black] (\Xpos,\Ypos,0) -- +(3,0,0) node[anchor=north east]{$X_m$};
+      \draw[thick,\ArrowType, black] (\Xpos,\Ypos,0) -- +(0,1.5,0) node[anchor=north west]{$Y_m$};
+      \draw[thick,\ArrowType, black] (\Xpos,\Ypos,0) -- +(0,0,1.5) node[anchor=south]{$Z_m$};
+
+  \end{tikzpicture}
+\end{adjustbox}
+\caption{aaaa}
+\end{figure}
 
 \section{Exercício 1:}
 \noindent\textbf{Enunciado:}\\
