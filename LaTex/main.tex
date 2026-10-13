@@ -2,6 +2,7 @@
 
 %\usepackage[latin1]{inputenc}
 \usepackage[utf8]{inputenc}
+\usepackage{siunitx}
 \usepackage{graphicx,amsmath,amssymb,marvosym,latexsym,lineno,hyperref}
 \usepackage{float}
 \usepackage{arydshln}
@@ -16,6 +17,7 @@
 \usepackage{float}
 \usepackage{adjustbox}
 \usepackage{breqn}
+\usepackage{xfrac}
 
 \newtheorem{lema}{Lema}
 \newcommand{\R}{\mathds{R}}
@@ -41,8 +43,7 @@ Ponte Rolante, Pórtico, Modelagem de sistemas mecânicos, Linearização em tor
 \end{IEEEkeywords}
 
 \section{Introdução}
-Técnicas de visão computacional vem sendo amplamente utilizadas para desenvolver sistemas autônomos utilizando VANTs \cite{meyer2000matrix}.
-
+blablabla
 \section{Modelagem do sistema}
 
 Uma ponte rolante, representada na Figura \ref{fig:crane_tikz} , pode ser vista como o seguinte conjunto de estruturas: 
@@ -176,10 +177,10 @@ Aqui são consideradas as seguintes simplificações:
 Tal formulação, ainda que correta, não deixa explícita a influência de esforços não conservativos tais como atrito e opta por esforços genéricos $Q_{g,i}$ para os englobar. Visto que, na abordagem de modelagem adotada, é desejado considerar a influência dos atritos viscosos, opta-se por deixá-lo evidente. De fato, para sistemas cujos únicos esforços não conservativos são do tipo dissipativos proporcionais à velocidade, pode-se considerar $Q_{g,i}$ como tendo duas componentes como segue \cite{Meirovitch2012}: %pg 90
 
 \begin{equation}
-  Q_{g,i} = -\frac{\partial R(\dot{\mathbf{q}})}{\partial \dot{q_i}} + Q_{i}
+  Q_{g,i} = -\frac{\partial R(\dot{\mathbf{q}})}{\partial \dot{q_i}} + f_{i}
 \end{equation}
 
-\noindent onde $Q_i$ é representa a componente do vetor de esforços externos relativa à i-ésima junta (e.g. esforço de atuação, ou perturbação na junta) e $R$ é dada pela função de dissipação de Rayleigh, caracterizada por
+\noindent onde $f_i$ é representa a componente do vetor de esforços externos relativa à i-ésima junta (e.g. esforço de atuação, ou perturbação na junta) e $R$ é dada pela função de dissipação de Rayleigh, caracterizada por
 
 \begin{equation}
   R(\dot{\mathbf{q}}) = \frac{1}{2}\left(D_x\dot{x}^2+D_y\dot{y}^2+D_l\dot{l}^2\right)\label{eq:rayleigh}
@@ -190,7 +191,7 @@ Tal formulação, ainda que correta, não deixa explícita a influência de esfo
 Dessa forma, é possível reescrever a Equação de Euler-Lagrange para sistemas não conservativos, cujas forças não conservativas são do tipo dissipativas proporcionais à velocidade como \cite{thiago2026}:
 
 \begin{equation}
-  \frac{d}{dt}\left(\frac{\partial L(\mathbf{q}, \dot{\mathbf{q}})}{\partial \dot{q_i}}\right) - \frac{\partial L(\mathbf{q}, \dot{\mathbf{q}})}{\partial q_i} + \frac{\partial R(\dot{\mathbf{q}})}{\partial \dot{q_i}} = Q_{i}\label{eq:euler_lagrange_non_conservative}
+  \frac{d}{dt}\left(\frac{\partial L(\mathbf{q}, \dot{\mathbf{q}})}{\partial \dot{q_i}}\right) - \frac{\partial L(\mathbf{q}, \dot{\mathbf{q}})}{\partial q_i} + \frac{\partial R(\dot{\mathbf{q}})}{\partial \dot{q_i}} = f_{i}\label{eq:euler_lagrange_non_conservative}
 \end{equation}
 
 A fim de calcular o Lagrangiano, a energia cinética do sistema e potencial da carga podem serem reescritas como
@@ -211,65 +212,78 @@ e $g$ é a aceleração da gravidade. Nesse caso, a velocidade da carga $v_m$ po
         &+2\left(sin(\theta_y)\dot{l}+l\cos(\theta_y)\dot{\theta}_y\right)\dot{y}\label{eq:vm}
 \end{align}
 
-Adotando $Q_i = \left[\begin{array}{ccccc}F_x &F_y &F_l &0 &0\end{array}\right]^T$ -- ou seja, forças externas apenas provenientes dos atuadores de junta, sem considerar perturbações-- podemos finalmente, a partir das equações \ref{eq:lagrangian}, \ref{eq:rayleigh}, \ref{eq:euler_lagrange_non_conservative}, \ref{eq:kinematic_en}, \ref{eq:potential_en} e \ref{eq:vm} derivar o modelo dinâmico não linear desse sistema, que resulta nas seguintes expressões\cite{lee}
+Adotando $\mathbf{f} = \left[\begin{array}{ccccc}f_x &f_y &f_l &0 &0\end{array}\right]^T$ -- ou seja, forças externas apenas provenientes dos atuadores de junta, sem considerar perturbações-- podemos finalmente, a partir das equações \ref{eq:lagrangian}, \ref{eq:rayleigh}, \ref{eq:euler_lagrange_non_conservative}, \ref{eq:kinematic_en}, \ref{eq:potential_en} e \ref{eq:vm} derivar o modelo dinâmico não linear desse sistema, que resulta nas seguintes expressões\cite{lee}
+
+\begin{adjustbox}{width=0.99\linewidth}
+  \parbox{\linewidth}{
+  \begin{align}
+    f_x &=\nonumber\\
+        &\begin{pmatrix}
+          (M_x + m)\ddot{x} + ml\cos(\theta_x)\cos(\theta_y)\ddot{\theta}_x - ml\sin(\theta_x)\sin(\theta_y)\ddot{\theta}_y \\
+          + m\sin(\theta_x)\cos(\theta_y)\ddot{l} + D_x\dot{x} + 2m\cos(\theta_x)\cos(\theta_y)\dot{l}\dot{\theta}_x \\
+          - 2m\sin(\theta_x)\sin(\theta_y)\dot{l}\dot{\theta}_y - ml\sin(\theta_x)\cos(\theta_y)\dot{\theta}_x^2 \\
+          - 2ml\cos(\theta_x)\sin(\theta_y)\dot{\theta}_x\dot{\theta}_y - ml\sin(\theta_x)\cos(\theta_y)\dot{\theta}_y^2
+        \end{pmatrix}\\
+    f_y &=\nonumber\\
+        &\begin{pmatrix}
+          (M_y + m)\ddot{y} + ml \cos(\theta_y)\ddot{\theta}_y + m\sin(\theta_y)\ddot{l} \\
+          {}+ D_y\dot{y} + 2m\cos(\theta_y)\dot{l}\dot{\theta}_y - ml\sin(\theta_y)\dot{\theta}_y^2
+        \end{pmatrix}\\
+    f_l &=\nonumber\\
+        &\begin{pmatrix}
+          (M_l + m)\ddot{l} + m\sin(\theta_x)\cos(\theta_y)\ddot{x} + m\sin(\theta_y)\ddot{y} + D_l\dot{l} \\
+          {}- ml\cos^2(\theta_y)\dot{\theta}_x^2 - ml\dot{\theta}_y^2 - mg\cos(\theta_x)\cos(\theta_y)
+        \end{pmatrix}\\
+    0 &=\nonumber\\
+      &\begin{pmatrix}
+        ml^2\cos^2(\theta_y)\ddot{\theta}_x + ml\cos(\theta_x)\cos(\theta_y)\ddot{x} + 2ml\cos^2(\theta_y)\dot{l}\dot{\theta}_x \\
+        {}- 2ml^2\sin(\theta_y)\cos(\theta_y)\dot{\theta}_x\dot{\theta}_y + mgl\sin(\theta_x)\cos(\theta_y)
+      \end{pmatrix}\\
+    0 &=\nonumber\\
+      &\begin{pmatrix}
+        ml^2\ddot{\theta}_y + ml\cos(\theta_y)\ddot{y} - ml\sin(\theta_x)\sin(\theta_y)\ddot{x} + 2ml\dot{l}\dot{\theta}_y \\
+        {}+ ml^2\cos(\theta_y)\sin(\theta_y)\dot{\theta}_x^2 + mgl\cos(\theta_x)\sin(\theta_y)
+      \end{pmatrix}
+  \end{align}
+}
+\end{adjustbox}
+
+
+Este modelo pode ser reescrito na forma matricial das equações de Euler-Lagrange\cite{Siciliano2009} como
+
+\begin{equation}
+  \mathbf{M}(\mathbf{q})\ddot{\mathbf{q}}+\mathbf{C}(\mathbf{q}, \dot{\mathbf{q}})\dot{\mathbf{q}}+\mathbf{D}\dot{\mathbf{q}}+\mathbf{g}(\mathbf{q}) = \mathbf{f}\label{eq:matricial_euler_lagrange}
+\end{equation}
+
+\noindent onde $\mathbf{M}(\mathbf{q})$ é a matriz de massas simétrica, $\mathbf{C}(\mathbf{q}, \dot{\mathbf{q}})$ é a matriz de forças centrífugas e de Coriolis, $\mathbf{D}$ é a matriz de amortecimento viscoso e $\mathbf{f}$ é o vetor de forças da gravidade, e são dadas como segue\cite{Almutairi}
 
 \begin{align}
-F_x &=\nonumber\\
-&\begin{pmatrix}
-(M_x + m)\ddot{x} + ml\cos(\theta_x)\cos(\theta_y)\ddot{\theta}_x - ml\sin(\theta_x)\sin(\theta_y)\ddot{\theta}_y \\
-+ m\sin(\theta_x)\cos(\theta_y)\ddot{l} + D_x\dot{x} + 2m\cos(\theta_x)\cos(\theta_y)\dot{l}\dot{\theta}_x \\
-- 2m\sin(\theta_x)\sin(\theta_y)\dot{l}\dot{\theta}_y - ml\sin(\theta_x)\cos(\theta_y)\dot{\theta}_x^2 \\
-- 2ml\cos(\theta_x)\sin(\theta_y)\dot{\theta}_x\dot{\theta}_y - ml\sin(\theta_x)\cos(\theta_y)\dot{\theta}_y^2
-\end{pmatrix}\\
-F_y &=\nonumber\\
-&\begin{pmatrix}
-(M_y + m)\ddot{y} + ml \cos(\theta_y)\ddot{\theta}_y + m\sin(\theta_y)\ddot{l} \\
-{}+ D_y\dot{y} + 2m\cos(\theta_y)\dot{l}\dot{\theta}_y - ml\sin(\theta_y)\dot{\theta}_y^2
-\end{pmatrix}\\
-F_l &=\nonumber\\
-&\begin{pmatrix}
-(M_l + m)\ddot{l} + m\sin(\theta_x)\cos(\theta_y)\ddot{x} + m\sin(\theta_y)\ddot{y} + D_l\dot{l} \\
-{}- ml\cos^2(\theta_y)\dot{\theta}_x^2 - ml\dot{\theta}_y^2 - mg\cos(\theta_x)\cos(\theta_y)
-\end{pmatrix}\\
-0 &=\nonumber\\
-&\begin{pmatrix}
-ml^2\cos^2(\theta_y)\ddot{\theta}_x + ml\cos(\theta_x)\cos(\theta_y)\ddot{x} + 2ml\cos^2(\theta_y)\dot{l}\dot{\theta}_x \\
-{}- 2ml^2\sin(\theta_y)\cos(\theta_y)\dot{\theta}_x\dot{\theta}_y + mgl\sin(\theta_x)\cos(\theta_y)
-\end{pmatrix}\\
-0 &=\nonumber\\
-&\begin{pmatrix}
-ml^2\ddot{\theta}_y + ml\cos(\theta_y)\ddot{y} - ml\sin(\theta_x)\sin(\theta_y)\ddot{x} + 2ml\dot{l}\dot{\theta}_y \\
-{}+ ml^2\cos(\theta_y)\sin(\theta_y)\dot{\theta}_x^2 + mgl\cos(\theta_x)\sin(\theta_y)
-\end{pmatrix}
-\end{align}
-
-
-\begin{align*}
-\mathbf{F} &= \begin{bmatrix} F_x & F_y & F_l & 0 & 0 \end{bmatrix}^T, \\
-\mathbf{G}(\mathbf{q}) &= \begin{bmatrix} 0 & 0 & g_3 & g_4 & g_5 \end{bmatrix}^T, \\
+\mathbf{f} &= \begin{bmatrix} f_x & f_y & f_l & 0 & 0 \end{bmatrix}^T \\
+\mathbf{g}(\mathbf{q}) &= \begin{bmatrix} 0 & 0 & g_3 & g_4 & g_5 \end{bmatrix}^T \\
 \mathbf{D} &= \begin{bmatrix}
 D_x & 0 & 0 & 0 & 0 \\
 0 & D_y & 0 & 0 & 0 \\
 0 & 0 & D_l & 0 & 0 \\
 0 & 0 & 0 & 0 & 0 \\
 0 & 0 & 0 & 0 & 0
-\end{bmatrix}, \\
+\end{bmatrix} \\
 \mathbf{C}(\mathbf{q}, \dot{\mathbf{q}}) &= \begin{bmatrix}
 0 & 0 & c_{13} & c_{14} & c_{15} \\
 0 & 0 & c_{23} & 0 & c_{25} \\
 0 & 0 & 0 & c_{34} & c_{35} \\
 0 & 0 & c_{43} & c_{44} & c_{45} \\
 0 & 0 & c_{53} & c_{54} & c_{55}
-\end{bmatrix}, \\
+\end{bmatrix} \\
 \mathbf{M}(\mathbf{q}) &= \begin{bmatrix}
 m_{11} & 0 & m_{13} & m_{14} & m_{15} \\
 0 & m_{22} & m_{23} & 0 & m_{25} \\
 m_{31} & m_{32} & m_{33} & 0 & 0 \\
 m_{41} & 0 & 0 & m_{44} & 0 \\
 m_{51} & m_{52} & 0 & 0 & m_{55}
-\end{bmatrix}.
-\end{align*}
+\end{bmatrix}\label{eq:mass_matrix}
+\end{align}
 
+\noindent e suas componentes são dadas por
 
 \begin{align*}
 m_{11} &= M_x + m, \\
@@ -302,11 +316,74 @@ g_4 &= mgl \sin(\theta_x) \cos(\theta_y), \\
 g_5 &= mgl \cos(\theta_x) \sin(\theta_y).
 \end{align*}
 
+Vale notar que a matriz $\mathbf{M}(\mathbf{q})$ é simétrica positiva definida, e portanto inversível, sob as restrições $l>0$, $|\theta_y| < \sfrac{\pi}{2}$. Tais condições, juntamente com o fato de que as massas são todas positivas, serão consideradas satisfeitas no regime de operação adotado, uma vez que representam que a carga sempre está abaixo do carro.
+
 \subsection{Linearização do Modelo Dinâmico}
 
-\begin{align*}
-\mathbf{F}_{\text{lin}} &= \begin{bmatrix} F_x & F_y & F_l & 0 & 0 \end{bmatrix}^T, \\
-\mathbf{G}_{\text{lin}}(\mathbf{q}) &= \begin{bmatrix} 0 & 0 & -mg & g\theta_x & g\theta_y \end{bmatrix}^T, \\
+O modelo matemático previamente apresentado, constituído pelas Equações \ref{eq:matricial_euler_lagrange} até \ref{eq:mass_matrix}, pode ser linearizado em torno de um ponto de equilíbrio vertical sob as seguintes condições\cite{lee}
+
+\begin{itemize}
+  \item As acelerações máximas do sistema são muito inferiores à aceleração gravitacional e o comprimento do cabo de içamento $l$ é mantido constante ou variado lentamente enquanto o carro se movimenta. Na prática, essas condições podem ser descritas como\\
+    \begin{equation}
+      \begin{cases}
+        |\ddot{x}| \ll g,\\
+        |\ddot{y}| \ll g,\\
+        |\ddot{l}| \ll g,\\
+        |\ddot{l}| \ll |l|.\\
+      \end{cases}
+    \end{equation}
+  implicando em\\
+    \begin{equation}
+      \begin{cases}
+        |l\ddot{\theta}_x| \ll g,\\
+        |l\ddot{\theta}_y| \ll g,\\
+        |\theta_x| \ll 1,\\
+        |\theta_y| \ll 1.\\
+      \end{cases}
+    \end{equation}
+  e também
+    \begin{equation}
+      \begin{cases}
+        |\dot{\theta}_x| \ll 1,\\
+        |\dot{\theta}_y| \ll 1.\\
+      \end{cases}
+    \end{equation}
+  \item Os ângulos da carga são mantidos suficientemente pequenos, possibilitando as seguintes aproximações a partir do primeiro termo da série de Taylor em torno de $0$
+    \begin{equation}
+      \begin{cases}
+        \sin(\theta_x) \approx \theta_x,\\
+        \sin(\theta_y) \approx \theta_y,\\
+        \cos(\theta_x) \approx 1,\\
+        \cos(\theta_y) \approx 1.\\
+      \end{cases}
+    \end{equation}
+  Nesse caso, com tais aproximações para as funções trigonométricas, os termos de ordem elevada do modelo não linear podem ser desprezados.
+\end{itemize}
+
+Desta forma, aplicando tais aproximações ao modelo não linear caracterizado pelas Equações \ref{eq:matricial_euler_lagrange} até \ref{eq:mass_matrix} e dividindo as expressões resultantes das dinâmicas de $\theta_x$ e $\theta_y$ por $ml$, obtém-se as seguintes expressões\cite{lee}
+
+\begin{align}
+  (M_x+m)\ddot{x}+D_x\dot{x}+ml\ddot{\theta}_x &= f_x\\
+  (M_y+m)\ddot{y}+D_y\dot{y}+ml\ddot{\theta}_y &= f_y\\
+  (M_l+m)\ddot{l}+D_l\dot{y}-mg &= f_l\\
+  l\ddot{\theta}_x+\ddot{x}+g{\theta}_x &= 0\\
+  l\ddot{\theta}_y+\ddot{y}+g{\theta}_y &= 0
+\end{align}
+
+Esta representação consistem em três subsistemas mutualmente desacoplados: 
+\begin{itemize}
+  \item Subsistema da ponte: estados $x$ e $\theta_x$;\\
+  \item Subsistema do carro: estados $y$ e $\theta_y$;\\
+  \item Subsistema de içamento: estado $l$;
+\end{itemize}
+
+\begin{equation}
+  \mathbf{M}_{lin}(\mathbf{q})\ddot{\mathbf{q}}+\mathbf{D}_{lin}\dot{\mathbf{q}}+\mathbf{g}_{lin}(\mathbf{q}) = \mathbf{f}_{lin}\label{eq:matricial_euler_lagrange_linear}
+\end{equation}
+
+\begin{align}
+\mathbf{f}_{\text{lin}} &= \begin{bmatrix} f_x & f_y & f_l & 0 & 0 \end{bmatrix}^T, \\
+\mathbf{g}_{\text{lin}}(\mathbf{q}) &= \begin{bmatrix} 0 & 0 & -mg & g\theta_x & g\theta_y \end{bmatrix}^T, \\
 \mathbf{D}_{\text{lin}} &= \begin{bmatrix}
 D_x & 0 & 0 & 0 & 0 \\
 0 & D_y & 0 & 0 & 0 \\
@@ -321,10 +398,128 @@ M_x + m & 0 & 0 & ml & 0 \\
 1 & 0 & 0 & l & 0 \\
 0 & 1 & 0 & 0 & l
 \end{bmatrix}.
-\end{align*}
+\end{align}
 
 
-\subsection{Representação no Espaço de Estados do Modelo Dinâmico Linearizado}
+\subsection{Modelo Dinâmico quasi-LPV}
+
+Para formular uma representação no espaço de estados do modelo dinâmico linearizado, primeiro se separa o vetor gravidade $\mathbf{G}_{\text{lin}}(\mathbf{q})$ em dois termos: um constante, $\mathbf{G}_0$, e um termo dependente das variáveis de junta $\mathbf{G}_q \mathbf{q}$ da seguinte forma
+\begin{align}
+  \mathbf{G}_{\text{lin}}(\mathbf{q}) &= \mathbf{G}_0 + \mathbf{G}_q \mathbf{q} \nonumber\\
+&=
+\begin{bmatrix} 0 \\ 0 \\ -mg \\ 0 \\ 0 \end{bmatrix} + 
+\begin{bmatrix}
+0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & g & 0 \\
+0 & 0 & 0 & 0 & g
+\end{bmatrix}
+\begin{bmatrix} x \\ y \\ l \\ \theta_x \\ \theta_y \end{bmatrix}
+\end{align}
+
+Em seguida, realiza-se a inversão da matriz de massa $\mathbf{M}_{\text{lin}}(\mathbf{q})$, resultando em
+\begin{equation}
+\mathbf{M}_{\text{lin}}^{-1} = \begin{bmatrix}
+\frac{1}{M_x} & 0 & 0 & -\frac{m}{M_x} & 0 \\[6pt]
+0 & \frac{1}{M_y} & 0 & 0 & -\frac{m}{M_y} \\[6pt]
+0 & 0 & \frac{1}{M_l + m} & 0 & 0 \\[6pt]
+-\frac{1}{M_x l} & 0 & 0 & \frac{M_x + m}{M_x l} & 0 \\[6pt]
+0 & -\frac{1}{M_y l} & 0 & 0 & \frac{M_y + m}{M_y l}
+\end{bmatrix}
+\end{equation}
+
+\subsection{Representação em Espaço de Estados do Modelo Dinâmico quasi-LPV}
+
+Dessa forma, é possível isolar $\ddot{\mathbf{q}}$ na Equação \ref{eq:matricial_euler_lagrange_linear} resultando em
+\begin{equation}
+\ddot{\mathbf{q}} = -\mathbf{M}_{\text{lin}}^{-1}\mathbf{D}_{\text{lin}}\dot{\mathbf{q}} - \mathbf{M}_{\text{lin}}^{-1}\mathbf{G}_q \mathbf{q} - \mathbf{M}_{\text{lin}}^{-1}\mathbf{G}_0 + \mathbf{M}_{\text{lin}}^{-1}\mathbf{F}_{\text{lin}}
+\end{equation}
+
+Defining the state vector as $\mathbf{x} = [\dot{\mathbf{q}}^T \quad \mathbf{q}^T]^T$, we reach the final state-space form:
+\begin{equation}
+\dot{\mathbf{x}} = \mathbf{A}\mathbf{x} + \mathbf{B}_g\mathbf{G}_0 + \mathbf{B}_F\mathbf{F}_{\text{lin}}
+\end{equation}
+
+where the matrices are fully expanded in terms of your original scalar parameters:
+
+\begin{adjustbox}{width=0.95\linewidth}
+  \parbox{\linewidth}{
+\begin{align}
+&\mathbf{A} = \begin{bmatrix} -\mathbf{M}_{\text{lin}}^{-1}\mathbf{D}_{\text{lin}} & -\mathbf{M}_{\text{lin}}^{-1}\mathbf{G}_q \\ \mathbf{I}_{5\times5} & \mathbf{0}_{5\times5} \end{bmatrix} = \nonumber\\
+&\left[\begin{array}{ccccc:ccccc}
+-\frac{D_x}{M_x} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & \frac{mg}{M_x} & 0 \\
+0 & -\frac{D_y}{M_y} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & \frac{mg}{M_y} \\
+0 & 0 & -\frac{D_l}{M_l + m} & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\[6pt]
+\frac{D_x}{M_x l} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & -\frac{g(M_x + m)}{M_x l} & 0 \\
+0 & \frac{D_y}{M_y l} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & -\frac{g(M_y + m)}{M_y l} \\
+\hdashline\\[-10pt]
+1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 
+\end{array}\right]
+\end{align}
+}
+\end{adjustbox}
+
+\begin{align}
+&\mathbf{B}_g = \begin{bmatrix} -\mathbf{M}_{\text{lin}}^{-1} \\ \mathbf{0}_{5\times5} \end{bmatrix} = \nonumber\\
+&\left[\begin{array}{ccccc}
+-\frac{1}{M_x} & 0 & 0 & \frac{m}{M_x} & 0 \\
+0 & -\frac{1}{M_y} & 0 & 0 & \frac{m}{M_y} \\
+0 & 0 & -\frac{1}{M_l + m} & 0 & 0 \\
+\frac{1}{M_x l} & 0 & 0 & -\frac{M_x + m}{M_x l} & 0 \\
+0 & \frac{1}{M_y l} & 0 & 0 & -\frac{M_y + m}{M_y l} \\
+\hdashline
+0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0
+\end{array}\right]
+\end{align}
+
+\begin{align}
+&\mathbf{B}_F = \begin{bmatrix} \mathbf{M}_{\text{lin}}^{-1} \\ \mathbf{0}_{5\times5} \end{bmatrix} = \nonumber\\
+&\left[\begin{array}{ccccc}
+\frac{1}{M_x} & 0 & 0 & -\frac{m}{M_x} & 0 \\
+0 & \frac{1}{M_y} & 0 & 0 & -\frac{m}{M_y} \\
+0 & 0 & \frac{1}{M_l + m} & 0 & 0 \\
+-\frac{1}{M_x l} & 0 & 0 & \frac{M_x + m}{M_x l} & 0 \\
+0 & -\frac{1}{M_y l} & 0 & 0 & \frac{M_y + m}{M_y l} \\
+\hdashline
+0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0
+\end{array}\right]
+\end{align}
+
+\subsection{Representação na forma Diagonal/Jordan}
+
+\begin{table}[H]
+  \begin{center}
+    \begin{tabular}{llrc}
+      \hline
+      \textbf{Parâmetro} & \textbf{Descrição} & \textbf{Valor} & \textbf{Unidade}\\
+      \hline
+      $M_x$ & Massa efetiva do eixo $X$ & $148,16$ & \si{kg}\\
+      $M_y$ & Massa efetiva do eixo $Y$ & $154,05$ & \si{kg}\\
+      $M_l$ & Massa efetiva de içamento & $134,08$ & \si{kg}\\
+      $m$ & Massa da carga $X$ & $5,82$ & \si{kg}\\
+      \hline
+      $D_x$ & Amortecimento do eixo $X$ & $2475,66$ & \si{Ns/m}\\
+      $D_y$ & Amortecimento do eixo $Y$ & $4000,00$ & \si{Ns/m}\\
+      $D_l$ & Amortecimento de içamento & $2913,24$ & \si{Ns/m}\\
+      \hline
+    \end{tabular}
+  \end{center}
+  \caption{Valor parâmetros do modelo. Fonte: \cite{thiago2026}}
+  \label{tab:and_xor_distributive}
+\end{table}
 
 \section{Resposta do Sistema em Malha Aberta}
 
