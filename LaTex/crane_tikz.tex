@@ -1,0 +1,185 @@
+  \tdplotsetmaincoords{75}{115}
+  \begin{tikzpicture}[tdplot_main_coords, line join=round, line cap=round]
+
+      % --- Custom Macro to draw a 3D Box ---
+      % Usage: \drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
+      \newcommand{\drawbox}[7]{%
+        \def\X{#1} \def\Y{#2} \def\Z{#3}
+        \def\dX{#4} \def\dY{#5} \def\dZ{#6}
+        \colorlet{boxcol}{#7} 
+        
+        % BACK FACES (Drawn first so they are hidden by front faces)
+        % Bottom face
+        \draw[fill=boxcol!30!black, draw=black, semithick] 
+          (\X, \Y, \Z) -- (\X+\dX, \Y, \Z) -- (\X+\dX, \Y+\dY, \Z) -- (\X, \Y+\dY, \Z) -- cycle;
+        % -X face
+        \draw[fill=boxcol!40!black, draw=black, semithick] 
+          (\X, \Y, \Z) -- (\X, \Y+\dY, \Z) -- (\X, \Y+\dY, \Z+\dZ) -- (\X, \Y, \Z+\dZ) -- cycle;
+        % -Y face
+        \draw[fill=boxcol!50!black, draw=black, semithick] 
+          (\X, \Y, \Z) -- (\X+\dX, \Y, \Z) -- (\X+\dX, \Y, \Z+\dZ) -- (\X, \Y, \Z+\dZ) -- cycle;
+          
+        % FRONT FACES (Drawn last to cover the back faces)
+        % +X face (Faces front-left in this projection)
+        \draw[fill=boxcol!70!white, draw=black, semithick] 
+          (\X+\dX, \Y, \Z) -- (\X+\dX, \Y+\dY, \Z) -- (\X+\dX, \Y+\dY, \Z+\dZ) -- (\X+\dX, \Y, \Z+\dZ) -- cycle;
+        % +Y face (Faces front-right in this projection)
+        \draw[fill=boxcol, draw=black, semithick] 
+          (\X, \Y+\dY, \Z) -- (\X+\dX, \Y+\dY, \Z) -- (\X+\dX, \Y+\dY, \Z+\dZ) -- (\X, \Y+\dY, \Z+\dZ) -- cycle;
+        % +Z face (Faces top)
+        \draw[fill=boxcol!40!white, draw=black, semithick] 
+          (\X, \Y, \Z+\dZ) -- (\X+\dX, \Y, \Z+\dZ) -- (\X+\dX, \Y+\dY, \Z+\dZ) -- (\X, \Y+\dY, \Z+\dZ) -- cycle;
+      }
+
+      % --- Variables for robot position ---
+      \def\MaxXpos{5} % Max x value
+      \def\Xpos{2.5}  % Position along X-axis
+      \def\MaxYpos{5} % Max x value
+      \def\Ypos{2.5}  % Position along Y-axis
+      \def\MaxZpos{5} % Max x value
+      \def\Zpos{1.2}  % Position along Z-axis
+
+            % --- Pendulum Parameters ---
+      \def\PendL{4.0}  % Length of the pendulum
+      \def\ThetaX{28}  % Swing angle in XZ plane (degrees)
+      \def\ThetaY{35}  % Swing angle in YZ plane (degrees)
+      \def\ArcR{2.0}   % Radius for the drawn angle arcs
+
+      % compute mass coordinates
+      % tan(theta_x) = X/(-Z) and tan(theta_y) = Y/(-Z)
+      \pgfmathsetmacro{\TanX}{tan(\ThetaX)}
+      \pgfmathsetmacro{\TanY}{tan(\ThetaY)}
+      \pgfmathsetmacro{\Denom}{sqrt(\TanX*\TanX + \TanY*\TanY + 1)}
+      \pgfmathsetmacro{\Dz}{-\PendL / \Denom}
+      \pgfmathsetmacro{\Dx}{-\Dz * \TanX}
+      \pgfmathsetmacro{\Dy}{-\Dz * \TanY}
+      
+      % Final absolute coordinates for the pendulum mass
+      \pgfmathsetmacro{\Bx}{\Xpos + \Dx}
+      \pgfmathsetmacro{\By}{\Ypos + \Dy}
+      \pgfmathsetmacro{\Bz}{\Dz}
+
+
+
+      % --- Global Reference ---
+      \def\ArrowType{{-Stealth[scale=1.5]}}
+      \draw[dashed,black] (0,0,0) -- +(-4,0,0);
+      \draw[dashed,black] (0,0,0) -- +(0,-3,0);
+      \draw[dashed,black] (0,0,0) -- +(0,0,-2);
+      % measures
+      \draw[dashed,black] (\Xpos,0,0) -- +(0,-3,0);
+      \draw[dashed,Stealth-Stealth,black] (0,-1.5,0) -- +(\Xpos,0,0) node[midway,above] {$x$};
+      \draw[dashed,black] (\Xpos,\Ypos,0) -- +(-\Xpos-4,0,0);
+      \draw[dashed,Stealth-Stealth,black] (-2,0,0) -- +(0,\Ypos,0) node[midway,above] {$y$};
+
+
+      % --- Trilho ---
+      \def\TrilhoDx{0.5}
+      \def\TrilhoLy{0.4}
+      \def\TrilhoLz{0.15}
+      % Bounding Box
+      \draw[dashed, black, thin] (\Bx, \Ypos, 0) -- (\Bx, \Ypos, \Bz);
+      \draw[dashed, black, thin] (\Bx, \By, -\TrilhoLz) -- (\Bx, \By, \Bz);
+      \draw[dashed, black, thin] (\Bx, \By, -\TrilhoLz) -- (\Bx, \By, \Bz);
+      \draw[dashed, black, thin] (\Xpos, \By, -\TrilhoLz) -- (\Xpos, \By, \Bz);
+      \draw[dashed, black, thin] (\Bx, \Ypos, \Bz) -- (\Bx, \By, \Bz) -- (\Xpos, \By, \Bz);
+      \draw[dashed, black, thin] (\Xpos, \Ypos, \Bz) -- (\Bx, \Ypos, \Bz);
+      \draw[dashed, black, thin] (\Xpos, \Ypos, \Bz) -- (\Xpos, \By, \Bz);
+      %\drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
+      \drawbox{-\TrilhoDx}{-\TrilhoLy*0.5}{-\TrilhoLz}{\MaxXpos+2*\TrilhoDx}{\TrilhoLy}{\TrilhoLz}{black!60}
+      \drawbox{-\TrilhoDx}{\MaxYpos-\TrilhoLy*0.5}{-\TrilhoLz}{\MaxXpos+2*\TrilhoDx}{\TrilhoLy}{\TrilhoLz}{black!60}
+
+      % --- Global Reference ---
+      \def\ArrowType{{-Stealth[scale=1.5]}}
+      \draw[thick,\ArrowType, black] (0,0,0) -- (8,0,0) node[anchor=north east]{$X$};
+      \draw[thick,\ArrowType, black] (0,0,0) -- (0,6,0) node[anchor=north west]{$Y$};
+      \draw[thick,\ArrowType, black] (0,0,0) -- (0,0,2) node[anchor=south]{$Z$};
+
+      % --- Ponte ---
+      %\drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
+      \def\PonteLx{0.8}
+      \def\PonteDy{0.2}
+      \def\PonteLz{0.2}
+      % \drawbox{\Xpos-0.5*\PonteLx}{-\PonteDy}{0}{\PonteLx}{\MaxYpos+2*\PonteDy}{\PonteLz}{black!60}
+      \drawbox{\Xpos-0.5*\PonteLx}{-\PonteDy}{0}{\PonteLx}{\Ypos+\PonteDy}{\PonteLz}{black!60}
+
+
+      % 1. Vertical reference line (Zero angle)
+      \draw[dashed, black, thin] (\Xpos, \Ypos, 0) -- (\Xpos, \Ypos, \Bz);
+
+      % 2. XZ Plane Projection
+      % Arc for \theta_x (parameterized plot acting as an arc in 3D)
+      \begin{scope}[shift={(\Xpos,\Ypos,0)}, x={(1,0,0)}, y={(0,0,1)}]
+        \draw[black, thin, -Stealth] (0,-\ArcR) arc (-90:-90+\ThetaX:\ArcR);
+        \def\LabelTxFraction{0.5}
+        \node[black] at ({-90+\ThetaX*\LabelTxFraction}:\ArcR*1.15) {$\theta_x$};
+      \end{scope}
+
+      % 3. YZ Plane Projection (Red)
+      \draw[dashed, black, thin] (\Xpos, \Ypos, 0) -- (\Xpos, \By, \Bz);
+      \draw[dashed, black, thin] (\Xpos, \Ypos, \Bz) -- (\Bx, \By, \Bz);
+      % Arc for \theta_y (Also removed 'smooth' here to fix its arrow angle)
+      \draw[black, thin, -Stealth] plot[domain=0:\ThetaY, samples=40, variable=\t]
+        ({\Xpos}, {\Ypos + \ArcR*sin(\t)}, {-\ArcR*cos(\t)});
+      % Change \LabelFraction to adjust where the label sits along the arc (0 to 1)
+      \def\LabelTyFraction{0.4}
+      \node[black] at ({\Xpos}, {\Ypos + \ArcR*1.15*sin(\ThetaY*\LabelTyFraction)}, {-\ArcR*1.15*cos(\ThetaY*\LabelTyFraction)}) {$\theta_y$};
+
+      % 5. The actual Pendulum Rod and Bob
+      \draw[line width=0.5mm, black] (\Xpos, \Ypos, 0) -- (\Bx, \By, \Bz) node[midway,above,xshift=-8pt] {$l$};
+      \draw[red!50!black,very thick,-Latex] (\Bx, \By, \Bz) -- +(0,0,-1) node[below] {$F_P = mg$};
+      \node[circle, minimum size=0.5cm, inner sep=0pt, ball color=black!50!white, draw=black, semithick] 
+        at (\Bx, \By, \Bz) {};
+
+      % --- Carro ---
+      %\drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
+      \def\CarroLx{1.2}
+      \def\CarroLy{0.8}
+      \def\CarroLz{0.4}
+      \drawbox{\Xpos-0.5*\CarroLx}{\Ypos-0.5*\CarroLy}{0}{\CarroLx}{\CarroLy}{\CarroLz}{black!60}
+
+      % --- Ponte ---
+      %\drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
+      \drawbox{\Xpos-0.5*\PonteLx}{\Ypos+0.5*\CarroLy}{0}{\PonteLx}{\MaxYpos-\Ypos-\CarroLy*0.5+\PonteDy}{\PonteLz}{black!60}
+
+      % --- Local Reference ---
+      \def\ArrowType{{-Stealth[scale=1.5]}}
+      \draw[dotted,black] (\Xpos,\Ypos,0) -- +(8-\Xpos,0,0);
+      \draw[dotted,black] (\Xpos,\Ypos,0) -- +(0,6-\Ypos,0);
+      \draw[dotted, black] (\Xpos,\Ypos,0) -- +(0,0,2);
+      % --- Local Reference ---
+      \def\ArrowType{{-Stealth[scale=1.5]}}
+      \draw[thick,\ArrowType, black] (\Xpos+0.5*\CarroLx,\Ypos,0) -- +(8-\Xpos,0,0) node[anchor=north east]{$X_C$};
+      \draw[thick,\ArrowType, black] (\Xpos,\MaxYpos+0.5*\TrilhoDx,0) -- +(0,6-\MaxYpos,0) node[anchor=north west]{$Y_C$};
+      \draw[thick,\ArrowType, black] (\Xpos,\Ypos,\CarroLz) -- +(0,0,2) node[anchor=south]{$Z_C$};
+
+      \draw[dashed, Stealth-Stealth,black, thin] (\Bx, \Ypos, \Bz) -- (\Xpos, \Ypos, 0) node[midway,above, left=-1pt] {};
+
+      % --- Global Reference ---
+      \def\ArrowType{{-Stealth[scale=1.5]}}
+      \draw[dotted, black] (0,0,0) -- (8,0,0);
+      \draw[dotted, black] (0,0,0) -- (0,6,0);
+      \draw[dotted, black] (0,0,0) -- (0,0,2);
+
+
+
+      % --- Component Labels ---
+      % Using >=Stealth ensures the arrow head matches your other arrows
+      % The bend left/right commands draw nice curved lines to the labels
+      \draw[thin, <-, >=Stealth,black!80!white] (\MaxXpos+1, -0.1, 0.1) 
+        to[bend left] ++(1.0, -0.5, 0.8) node[above] {Trilho};
+        
+      \draw[thin, <-, >=Stealth,black!80!white] (\Xpos, \MaxYpos-0.5, \PonteLz) 
+        to[bend left] ++(-3.2, -0.8, 0.1) node[right] {Ponte};
+        
+      \draw[thin, <-, >=Stealth,black!80!white] (\Xpos-0.2*\CarroLx, \Ypos, \CarroLz) 
+        to[bend left] ++(-4.8, -0.8, 0.5) node[right] {Carro};
+        
+      % Points just to the right of the ball's center so it touches the edge
+      \draw[thin, <-, >=Stealth,black!80!white] (\Bx+0.8, \By+0.6, \Bz) 
+        to[bend right] ++(1.5, 1.5, 0) node[right] {Carga};
+
+      \draw[thin, <-, >=Stealth,black!80!white] (\Bx, \By-0.3, \Bz+1) 
+        to[bend left] ++(1.5, 2.5, 1) node[right] {Cabo de Içamento};
+
+  \end{tikzpicture}

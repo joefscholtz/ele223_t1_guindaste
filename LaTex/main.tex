@@ -15,13 +15,14 @@
 \usetikzlibrary{arrows.meta}
 \usepackage{float}
 \usepackage{adjustbox}
+\usepackage{breqn}
 
 \newtheorem{lema}{Lema}
 \newcommand{\R}{\mathds{R}}
 
 \begin{document}
 
-\title{ELE223 - Sistemas Lineares A: Resolução dos exercícios da semana 1}
+\title{Modelagem e Linearização de Guindastes do tipo Ponte}
 
 \author{
   Joe Ferreira Scholtz\\
@@ -32,640 +33,327 @@
 \thispagestyle{empty}\pagestyle{empty}
 
 \begin{abstract} % O abstract não deve exceder 100 palavras
-Resumo aqui!
+Guindastes do tipo ponte rolante ou pórtico são sistemas amplamente utilizados em diversoes setores industriais para o transporte de cargas pesadas dentro de um espaço de trabalho e consistem em um sistema mecânico com três eixos de atuação e seis graus de liberdade, ou seja, um sistema subatuado. O Presente trabalho aborda a modelagem e linearização em torno de ponto de equilíbrio desse tipo de sistema, as condições de funcionamento e divergência em relação ao modelo não linear.
 \end{abstract} % O abstract não deve exceder 100 palavras
 
 \begin{IEEEkeywords}
-Álgebra Linear, Sistemas Lineares, Matriz Inversa, Determinante, Campo, Espaço Vetorial, Dependência Linear.
+Ponte Rolante, Pórtico, Modelagem de sistemas mecânicos, Linearização em torno de ponto de equilíbrio
 \end{IEEEkeywords}
 
 \section{Introdução}
 Técnicas de visão computacional vem sendo amplamente utilizadas para desenvolver sistemas autônomos utilizando VANTs \cite{meyer2000matrix}.
 
-\tdplotsetmaincoords{75}{115}
+\section{Modelagem do sistema}
+
+Uma ponte rolante, representada na Figura \ref{fig:crane_tikz} , pode ser vista como o seguinte conjunto de estruturas: 
+
+\begin{itemize}
+  \item Trilho: Atuador linear ligado a uma estrutura fixa que move a Ponte em uma dada direção, nesse caso, a do eixo $X$;
+  \item Ponte: Conectada à movimentação do trilho, é um atuador linear que move o Carro em uma direção perpedincular à direção do Trilho, nesse caso, a do eixo $Y$;
+  \item Carro: Movimentado pela Ponte, é o ponto de origem do Cabo de Içamento;
+  \item Cabo de Içamento: Cabo retrátil de comprimento variável $l$ que conecta o Carro à Carga;
+  \item Carga: Corpo rígido de massa $m$ conectada à extremidade livre do Cabo de Içamento.
+\end{itemize}
+
+Sejam os sistemas de coordenadas, onde $(x,y,z)_{S}$ denota um ponto no espaço representado no sistema de coordenadas $S$.
+
+\begin{itemize}
+  \item $S_0 : \{X,Y,Z\}$: Sistema de coordenadas inercial global, fixo à estrutura do trilho, em uma de suas extremidades. Assume-se este sistema de coordenadas quando nenhum é explicitado;
+  \item $S_C : {X_C,Y_C,Z_C}$: Sistema de coordenadas local alinhado à posição do Carro, com origem $(x,y,0)_{S0}$ e mesma orientação do sistema $S_0$.
+\end{itemize}
+
 \begin{figure}[H]
 \begin{adjustbox}{width=\linewidth}
-  \begin{tikzpicture}[tdplot_main_coords, line join=round, line cap=round]
-
-      % --- Custom Macro to draw a 3D Box ---
-      % Usage: \drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
-      \newcommand{\drawbox}[7]{%
-        \def\X{#1} \def\Y{#2} \def\Z{#3}
-        \def\dX{#4} \def\dY{#5} \def\dZ{#6}
-        \colorlet{boxcol}{#7} 
-        
-        % BACK FACES (Drawn first so they are hidden by front faces)
-        % Bottom face
-        \draw[fill=boxcol!30!black, draw=black, semithick] 
-          (\X, \Y, \Z) -- (\X+\dX, \Y, \Z) -- (\X+\dX, \Y+\dY, \Z) -- (\X, \Y+\dY, \Z) -- cycle;
-        % -X face
-        \draw[fill=boxcol!40!black, draw=black, semithick] 
-          (\X, \Y, \Z) -- (\X, \Y+\dY, \Z) -- (\X, \Y+\dY, \Z+\dZ) -- (\X, \Y, \Z+\dZ) -- cycle;
-        % -Y face
-        \draw[fill=boxcol!50!black, draw=black, semithick] 
-          (\X, \Y, \Z) -- (\X+\dX, \Y, \Z) -- (\X+\dX, \Y, \Z+\dZ) -- (\X, \Y, \Z+\dZ) -- cycle;
-          
-        % FRONT FACES (Drawn last to cover the back faces)
-        % +X face (Faces front-left in this projection)
-        \draw[fill=boxcol!70!white, draw=black, semithick] 
-          (\X+\dX, \Y, \Z) -- (\X+\dX, \Y+\dY, \Z) -- (\X+\dX, \Y+\dY, \Z+\dZ) -- (\X+\dX, \Y, \Z+\dZ) -- cycle;
-        % +Y face (Faces front-right in this projection)
-        \draw[fill=boxcol, draw=black, semithick] 
-          (\X, \Y+\dY, \Z) -- (\X+\dX, \Y+\dY, \Z) -- (\X+\dX, \Y+\dY, \Z+\dZ) -- (\X, \Y+\dY, \Z+\dZ) -- cycle;
-        % +Z face (Faces top)
-        \draw[fill=boxcol!40!white, draw=black, semithick] 
-          (\X, \Y, \Z+\dZ) -- (\X+\dX, \Y, \Z+\dZ) -- (\X+\dX, \Y+\dY, \Z+\dZ) -- (\X, \Y+\dY, \Z+\dZ) -- cycle;
-      }
-
-      % --- Variables for robot position ---
-      \def\MaxXpos{5} % Max x value
-      \def\Xpos{2.5}  % Position along X-axis
-      \def\MaxYpos{5} % Max x value
-      \def\Ypos{2.5}  % Position along Y-axis
-      \def\MaxZpos{5} % Max x value
-      \def\Zpos{1.2}  % Position along Z-axis
-
-            % --- Pendulum Parameters ---
-      \def\PendL{4.0}  % Length of the pendulum
-      \def\ThetaX{28}  % Swing angle in XZ plane (degrees)
-      \def\ThetaY{35}  % Swing angle in YZ plane (degrees)
-      \def\ArcR{2.0}   % Radius for the drawn angle arcs
-
-      % compute mass coordinates
-      % tan(theta_x) = X/(-Z) and tan(theta_y) = Y/(-Z)
-      \pgfmathsetmacro{\TanX}{tan(\ThetaX)}
-      \pgfmathsetmacro{\TanY}{tan(\ThetaY)}
-      \pgfmathsetmacro{\Denom}{sqrt(\TanX*\TanX + \TanY*\TanY + 1)}
-      \pgfmathsetmacro{\Dz}{-\PendL / \Denom}
-      \pgfmathsetmacro{\Dx}{-\Dz * \TanX}
-      \pgfmathsetmacro{\Dy}{-\Dz * \TanY}
-      
-      % Final absolute coordinates for the pendulum mass
-      \pgfmathsetmacro{\Bx}{\Xpos + \Dx}
-      \pgfmathsetmacro{\By}{\Ypos + \Dy}
-      \pgfmathsetmacro{\Bz}{\Dz}
-
-
-
-      % --- Global Reference ---
-      \def\ArrowType{{-Stealth[scale=1.5]}}
-      \draw[dashed,black] (0,0,0) -- +(-4,0,0);
-      \draw[dashed,black] (0,0,0) -- +(0,-3,0);
-      \draw[dashed,black] (0,0,0) -- +(0,0,-2);
-      % measures
-      \draw[dashed,black] (\Xpos,0,0) -- +(0,-3,0);
-      \draw[dashed,Stealth-Stealth,black] (0,-1.5,0) -- +(\Xpos,0,0) node[midway,above] {$x$};
-      \draw[dashed,black] (\Xpos,\Ypos,0) -- +(-\Xpos-4,0,0);
-      \draw[dashed,Stealth-Stealth,black] (-2,0,0) -- +(0,\Ypos,0) node[midway,above] {$y$};
-
-
-      % --- Trilho ---
-      \def\TrilhoDx{0.5}
-      \def\TrilhoLy{0.4}
-      \def\TrilhoLz{0.15}
-      % Bounding Box
-      \draw[dashed, black, thin] (\Bx, \Ypos, 0) -- (\Bx, \Ypos, \Bz);
-      \draw[dashed, black, thin] (\Bx, \By, -\TrilhoLz) -- (\Bx, \By, \Bz);
-      \draw[dashed, black, thin] (\Bx, \By, -\TrilhoLz) -- (\Bx, \By, \Bz);
-      \draw[dashed, black, thin] (\Xpos, \By, -\TrilhoLz) -- (\Xpos, \By, \Bz);
-      \draw[dashed, black, thin] (\Bx, \Ypos, \Bz) -- (\Bx, \By, \Bz) -- (\Xpos, \By, \Bz);
-      \draw[dashed, black, thin] (\Xpos, \Ypos, \Bz) -- (\Bx, \Ypos, \Bz);
-      \draw[dashed, black, thin] (\Xpos, \Ypos, \Bz) -- (\Xpos, \By, \Bz);
-      %\drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
-      \drawbox{-\TrilhoDx}{-\TrilhoLy*0.5}{-\TrilhoLz}{\MaxXpos+2*\TrilhoDx}{\TrilhoLy}{\TrilhoLz}{black!60}
-      \drawbox{-\TrilhoDx}{\MaxYpos-\TrilhoLy*0.5}{-\TrilhoLz}{\MaxXpos+2*\TrilhoDx}{\TrilhoLy}{\TrilhoLz}{black!60}
-
-      % --- Global Reference ---
-      \def\ArrowType{{-Stealth[scale=1.5]}}
-      \draw[thick,\ArrowType, black] (0,0,0) -- (8,0,0) node[anchor=north east]{$X$};
-      \draw[thick,\ArrowType, black] (0,0,0) -- (0,6,0) node[anchor=north west]{$Y$};
-      \draw[thick,\ArrowType, black] (0,0,0) -- (0,0,2) node[anchor=south]{$Z$};
-
-      % --- Ponte ---
-      %\drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
-      \def\PonteLx{0.8}
-      \def\PonteDy{0.2}
-      \def\PonteLz{0.2}
-      % \drawbox{\Xpos-0.5*\PonteLx}{-\PonteDy}{0}{\PonteLx}{\MaxYpos+2*\PonteDy}{\PonteLz}{black!60}
-      \drawbox{\Xpos-0.5*\PonteLx}{-\PonteDy}{0}{\PonteLx}{\Ypos+\PonteDy}{\PonteLz}{black!60}
-
-
-      % 1. Vertical reference line (Zero angle)
-      \draw[dashed, black, thin] (\Xpos, \Ypos, 0) -- (\Xpos, \Ypos, \Bz);
-
-      % 2. XZ Plane Projection
-      % Arc for \theta_x (parameterized plot acting as an arc in 3D)
-      \begin{scope}[shift={(\Xpos,\Ypos,0)}, x={(1,0,0)}, y={(0,0,1)}]
-        \draw[black, thin, -Stealth] (0,-\ArcR) arc (-90:-90+\ThetaX:\ArcR);
-        \def\LabelTxFraction{0.5}
-        \node[black] at ({-90+\ThetaX*\LabelTxFraction}:\ArcR*1.15) {$\theta_x$};
-      \end{scope}
-
-      % 3. YZ Plane Projection (Red)
-      \draw[dashed, black, thin] (\Xpos, \Ypos, 0) -- (\Xpos, \By, \Bz);
-      \draw[dashed, black, thin] (\Xpos, \Ypos, \Bz) -- (\Bx, \By, \Bz);
-      % Arc for \theta_y (Also removed 'smooth' here to fix its arrow angle)
-      \draw[black, thin, -Stealth] plot[domain=0:\ThetaY, samples=40, variable=\t]
-        ({\Xpos}, {\Ypos + \ArcR*sin(\t)}, {-\ArcR*cos(\t)});
-      % Change \LabelFraction to adjust where the label sits along the arc (0 to 1)
-      \def\LabelTyFraction{0.4}
-      \node[black] at ({\Xpos}, {\Ypos + \ArcR*1.15*sin(\ThetaY*\LabelTyFraction)}, {-\ArcR*1.15*cos(\ThetaY*\LabelTyFraction)}) {$\theta_y$};
-
-      % 5. The actual Pendulum Rod and Bob
-      \draw[line width=0.5mm, black] (\Xpos, \Ypos, 0) -- (\Bx, \By, \Bz);
-      \draw[red!50!black,very thick,-Latex] (\Bx, \By, \Bz) -- +(0,0,-1) node[below] {$F_P = mg$};
-      \node[circle, minimum size=0.5cm, inner sep=0pt, ball color=black!50!white, draw=black, semithick] 
-        at (\Bx, \By, \Bz) {};
-
-      % --- Carro ---
-      %\drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
-      \def\CarroLx{1.2}
-      \def\CarroLy{0.8}
-      \def\CarroLz{0.4}
-      \drawbox{\Xpos-0.5*\CarroLx}{\Ypos-0.5*\CarroLy}{0}{\CarroLx}{\CarroLy}{\CarroLz}{black!60}
-
-      % --- Ponte ---
-      %\drawbox{x}{y}{z}{width_X}{width_Y}{height_Z}{base_color}
-      \drawbox{\Xpos-0.5*\PonteLx}{\Ypos+0.5*\CarroLy}{0}{\PonteLx}{\MaxYpos-\Ypos-\CarroLy*0.5+\PonteDy}{\PonteLz}{black!60}
-
-      % --- Local Reference ---
-      \def\ArrowType{{-Stealth[scale=1.5]}}
-      \draw[dotted,black] (\Xpos,\Ypos,0) -- +(8-\Xpos,0,0);
-      \draw[dotted,black] (\Xpos,\Ypos,0) -- +(0,6-\Ypos,0);
-      \draw[dotted, black] (\Xpos,\Ypos,0) -- +(0,0,2);
-      % --- Local Reference ---
-      \def\ArrowType{{-Stealth[scale=1.5]}}
-      \draw[thick,\ArrowType, black] (\Xpos+0.5*\CarroLx,\Ypos,0) -- +(8-\Xpos,0,0) node[anchor=north east]{$X_m$};
-      \draw[thick,\ArrowType, black] (\Xpos,\MaxYpos+0.5*\TrilhoDx,0) -- +(0,6-\MaxYpos,0) node[anchor=north west]{$Y_m$};
-      \draw[thick,\ArrowType, black] (\Xpos,\Ypos,\CarroLz) -- +(0,0,2) node[anchor=south]{$Z_m$};
-
-      \draw[dashed, Stealth-Stealth,black, thin] (\Bx, \Ypos, \Bz) -- (\Xpos, \Ypos, 0) node[midway,above, left=-1pt] {$l$};
-
-      % --- Global Reference ---
-      \def\ArrowType{{-Stealth[scale=1.5]}}
-      \draw[dotted, black] (0,0,0) -- (8,0,0);
-      \draw[dotted, black] (0,0,0) -- (0,6,0);
-      \draw[dotted, black] (0,0,0) -- (0,0,2);
-
-
-
-      % --- Component Labels ---
-      % Using >=Stealth ensures the arrow head matches your other arrows
-      % The bend left/right commands draw nice curved lines to the labels
-      \draw[thin, <-, >=Stealth,black!80!white] (\MaxXpos+1, -0.1, 0.1) 
-        to[bend left] ++(1.0, -0.5, 0.8) node[above] {Trilho};
-        
-      \draw[thin, <-, >=Stealth,black!80!white] (\Xpos, \MaxYpos-0.5, \PonteLz) 
-        to[bend left] ++(-3.2, -0.8, 0.1) node[right] {Ponte};
-        
-      \draw[thin, <-, >=Stealth,black!80!white] (\Xpos-0.2*\CarroLx, \Ypos, \CarroLz) 
-        to[bend left] ++(-4.8, -0.8, 0.5) node[right] {Carro};
-        
-      % Points just to the right of the ball's center so it touches the edge
-      \draw[thin, <-, >=Stealth,black!80!white] (\Bx+0.8, \By+0.6, \Bz) 
-        to[bend right] ++(1.5, 1.5, 0) node[right] {Carga};
-
-  \end{tikzpicture}
+  \input{crane_tikz}
 \end{adjustbox}
-\caption{aaaa}
+\caption{Representação de uma ponte rolante tridimensional, suas estruturas e os sistemas de coordenadas adotados. Fonte: Adaptado de \cite{thiago2026}.}
+\label{fig:crane_tikz}
 \end{figure}
 
-\section{Exercício 1:}
-\noindent\textbf{Enunciado:}\\
-\indent Demonstre a propriedade $(AB)^{-1} = B^{-1}A^{-1}, \forall A,B\text{ }n \times n$.
 
-\vspace{2mm}
-
-\noindent\textbf{Resolução:}\\
-\indent Se $A$ e $B$ são matrizes de dimensão $n \times n$, então os determinantes $\det(A)$ e $\det(B)$ são definidos. Assumindo também que $\det(A) \neq 0$ e $\det(B) \neq 0$, tem-se que as matrizes inversas $A^{-1}$ e $B^{-1}$ existem, sendo a definição de matriz inversa para uma matriz $M$ qualquer definida por:
+O vetor de configuração do sistema é dado como
 
 \begin{equation}
-  MM^{-1} = M^{-1}M \triangleq I
-  \label{eq:inverse_def}
-\end{equation}
-
-Utilizando a definição apresentada na Equação \ref{eq:inverse_def} com $AB$ como matriz em a questão se obtem:
-
-\begin{equation}
-  (AB)^{-1}(AB) = I
-  \label{eq:inverse_AB}
-\end{equation}
-
-Sendo $I$ a matriz identidade de dimensão $n \times n$. Utilizando a pressuposição de que a matriz $B^{-1}$ existe e multiplicando à direta a Equação \ref{eq:inverse_AB} por essa matriz obtemos:
-
-\begin{align}
-  (AB)^{-1}ABB^{-1} &= IB^{-1}\\
-  (AB)^{-1}A(BB^{-1}) &= B^{-1}\\
-  (AB)^{-1}AI &= B^{-1}\\
-  (AB)^{-1}A &= B^{-1}
-  \label{eq:pos_mul_B}
-\end{align}
-
-Simularmente, dessa vez assumindo que $A^{-1}$ existe e multiplicando essa matriz à direita na Equação \ref{eq:pos_mul_B} obtemos:
-
-\begin{align}
-  (AB)^{-1}A &= B^{-1}\\
-  (AB)^{-1}AA^{-1} &= B^{-1}A^{-1}\\
-  (AB)^{-1}(AA^{-1}) &= B^{-1}A^{-1}\\
-  \label{eq:pos_mul_A}
-  (AB)^{-1}I &= B^{-1}A^{-1}\\
-  (AB)^{-1} &= B^{-1}A^{-1}
-\end{align}
-
-Concluindo, tem-se então que
-
-\begin{align}
-  (AB)^{-1} = B^{-1}A^{-1}, \forall A,B\text{ }n \times n,\\ 
-                  \det(A) \neq 0, \det(B) \neq 0\nonumber
-\end{align}
-
-\section{Exercício 2:}
-\noindent\textbf{Enunciado:}\\
-\indent Mostre passo a passo o cálculo do determinante e da matriz inversa de:
-
-\begin{equation}
-A
+\mathbf{q}
 = 
 \left[
-\begin{array}{cccc}
-0 & 1 & -1 & 0\\
-1 & 1 & 1 & 0\\
-1 & 0 & 0 & 0\\
-0 & 0 & 0 & 1
+\begin{array}{c}
+x\\
+y\\
+l\\
+\theta_x\\ 
+\theta_y
 \end{array} 
-\right]
-\label{eq:A_matrix}
+\right]\\
 \end{equation}
 
-\vspace{2mm}
+Com $x$,$y$ posições do carro, e $l>0$ o comprimento do cabo de içamento da carga, as juntas atuadas, e $\theta_x$ e $\theta_y$ são os angulos da carga em relação, respectivamente, ao eixos $X$ e $Y$ de $S_0$, não atuados.
 
-\noindent\textbf{Resolução:}\\
-\indent Primeiramente, vale notar que a matriz $A$ definida na Equação \ref{eq:A_matrix} é uma matriz triangular por blocos, em especial uma matriz diagonal por blocos, como segue:
+\subsection{Modelo Geométrico Direto}
 
-\begin{align}
-A
-&= 
-\left[
-\begin{array}{ccc:c}
-0 & 1 & -1 & 0\\
-1 & 1 & 1 & 0\\
-1 & 0 & 0 & 0\\
-\hdashline
-0 & 0 & 0 & 1
-\end{array} 
-\right]\\
-&= 
-\left[
-\begin{array}{c:c}
-  A_1 & \textbf{0}_{3}\\[3pt]
-\hdashline 
-\noalign{\vspace{3pt}}
-\textbf{0}_{3}^{T}  & A_2
-\end{array} 
-\right]
-\end{align}
-
-Onde $\textbf{0}_{p}$ é o vetor coluna de dimensão $p$ cujos elementos são todos nulos, e as submatrizes $A_1$ e $A_2$ são dadas por:
+Dessa forma, o modelo geométrico direto, isto é, a posição da carga em função das variáveis de junta, é dado por
 
 \begin{align}
-A_1
-&= 
-\left[
-\begin{array}{ccc}
-0 & 1 & -1\\
-1 & 1 & 1\\
-1 & 0 & 0
-\end{array} 
-\right]\\
-A_2
+  \mathbf{p}_m(\mathbf{q})
 &= 
 \left[
 \begin{array}{c}
-1
-\end{array} 
-\right]
-\end{align}
-
-\begin{lema}
-\label{lema:det_bloco}
-O determinante de uma matriz diagonal por blocos é o produto dos determinantes de suas submatrizes diagonais principais \cite{meyer2000matrix}. Portanto, para uma matriz $M = \mathrm{diag}(M_1, M_2)$, tem-se que $\det(M) = \det(M_1) \cdot \det(M_2)$.
-\end{lema}
-
-\vspace{2mm}
-Pelo Lema \ref{lema:det_bloco}, o determinante da matriz $A$ pode ser facilmente calculado por:
-\begin{equation}
-\det(A) = \det(A_1) \cdot \det(A_2)
-\end{equation}
-
-É possível calcular o determinante da submatriz $A_1$ por meio da expansão de Laplace ao longo da $j$-ésima coluna, dada por:
-
-\begin{equation}
-\det(M) = \sum_{i=1}^{n} (-1)^{i+j} m_{i,j} \det(M_{i,j})
-\label{eq:laplace_expansion}
-\end{equation}
-
-Onde $m_{i,j}$ é a entrada da $i$-ésima linha e $j$-ésima coluna de $M$, e $M_{i,j}$ é a submatriz obtida pela remoção da $i$-ésima linha e da $j$-ésima coluna de $M$. Dessa forma, escolhendo $j = 3$, obtemos para a matriz $A_1$:
-
-\begin{align}
-  \det(A_1)
-  &\begin{aligned}[t]
-  = 1 \cdot \det\left( \begin{bmatrix} 1 & -1 \\ 1 & 1 \end{bmatrix} \right) &- 0 \cdot (A_1)_{2,3}\\ 
-            &+ 0 \cdot (A_1)_{3,3} \\
-  \end{aligned}\\
-  \phantom{\det(A_1)}
-  &= 1 \cdot (1 - (-1))\\
-  &= 2
-\end{align}
-
-Como $A_2$ é uma matriz $1 \times 1$, seu determinante é seu único elemento, de valor $1$. Portanto:
-\begin{equation}
-\det(A) = 2 \cdot 1 = 2
-\end{equation}
-
-Para o cálculo da matriz inversa, um raciocínio análogo pode ser aplicado através do seguinte lema:
-
-\begin{lema}
-\label{lema:inv_bloco}
-A inversa de uma matriz diagonal por blocos é a matriz diagonal por blocos formada pelas inversas das respectivas submatrizes originais, se essas inversas existirem\cite{meyer2000matrix}. Ou seja, $M^{-1} = \mathrm{diag}(M_1^{-1}, M_2^{-1})$ sse $\det(M_1) \neq 0$ e $det(M_2) \neq 0$.
-\end{lema}
-
-\vspace{2mm}
-Aplicando o Lema \ref{lema:inv_bloco} para a matriz $A$, a sua inversa $A^{-1}$ possui a seguinte estrutura:
-\begin{equation}
-A^{-1}
-= 
-\left[
-\begin{array}{c:c}
-  A_1^{-1} & \textbf{0}_{3}\\[3pt]
-\hdashline 
-\noalign{\vspace{3pt}}
-\textbf{0}_{3}^{T}  & A_2^{-1}
-\end{array} 
-\right]
-\end{equation}
-
-Para encontrar $A_1^{-1}$, podemos calcular pelo método da matriz de cofatores dado por:
-
-\begin{equation}
-  \begin{cases}
-    M^{-1} = \frac{1}{\det(M)} \mathrm{cof}(M)^{T}\\
-    \mathrm{cof}(M)_{i,j} = (-1)^{i+j}\det(M_{i,j})
-  \end{cases}
-\end{equation}
-
-Onde $\mathrm{cof}(M)_{i,j}$ é a entrada da $i$-ésima linha e $j$-ésima coluna de matriz de cofatores de $M$, e $M_{i,j}$ é a submatriz obtida pela remoção da $i$-ésima linha e da $j$-ésima coluna de $M$. Dessa forma, temos:
-
-\begin{align*}
-  \mathrm{cof}(M)_{1,1} &= \det\left( \begin{bmatrix} 1 & 1 \\ 0 & 0 \end{bmatrix} \right) = 0\\ 
-  \mathrm{cof}(M)_{1,2} &= -\det\left( \begin{bmatrix} 1 & 1 \\ 1 & 0 \end{bmatrix} \right) = 1\\ 
-  \mathrm{cof}(M)_{1,3} &= \det\left( \begin{bmatrix} 1 & 1 \\ 1 & 0 \end{bmatrix} \right) = -1\\ 
-  \mathrm{cof}(M)_{2,1} &= -\det\left( \begin{bmatrix} 1 & -1 \\ 0 & 0 \end{bmatrix} \right) = 0\\ 
-  \mathrm{cof}(M)_{2,2} &= \det\left( \begin{bmatrix} 0 & -1 \\ -1 & 0 \end{bmatrix} \right) = 1\\ 
-  \mathrm{cof}(M)_{2,3} &= -\det\left( \begin{bmatrix} 0 & 1 \\ 1 & 0 \end{bmatrix} \right) = 1\\ 
-  \mathrm{cof}(M)_{3,1} &= \det\left( \begin{bmatrix} 1 & -1 \\ 1 & 1 \end{bmatrix} \right) = 2\\ 
-  \mathrm{cof}(M)_{3,2} &= -\det\left( \begin{bmatrix} 1 & -1 \\ 1 & 1 \end{bmatrix} \right) = -1\\ 
-  \mathrm{cof}(M)_{3,3} &= \det\left( \begin{bmatrix} 0 & 1 \\ 1 & 1 \end{bmatrix} \right) = -1\\ 
-\end{align*}
-
-Então
-
-\begin{align}
-A_1^{-1} 
-&= \frac{1}{2}
-\left[
-\begin{array}{ccc}
-0 & 0 & 2 \\
-1 & 1 & -1 \\
--1 & 1 & -1
+x_m\\
+y_m\\
+z_m
 \end{array} 
 \right]\\
 &=
 \left[
-\begin{array}{ccc}
-0 & 0 & 1\\
-\frac{1}{2} & \frac{1}{2} & -\frac{1}{2}\\[3pt]
--\frac{1}{2} & \frac{1}{2} & -\frac{1}{2}\\
-\noalign{\vspace{1pt}}
+\begin{array}{c}
+x\\
+y\\
+0
 \end{array} 
 \right]
++
+\left[
+\begin{array}{c}
+l\sin(\theta_x)\cos(\theta_y)\\
+l\sin(\theta_y)\\
+-l\cos(\theta_x)\cos(\theta_y)
+\end{array} 
+\right]
+\label{eq:mass_position}
 \end{align}
 
-Como $A_2$ é uma matriz $1 \times 1$ não singular, sua inversa é a matriz composta pelo inverso do seu único elemento. Portanto, substituindo as submatrizes inversas na estrutura em blocos, a matriz inversa final $A^{-1}$ é dada por:
+\subsection{Modelo Cinemático Direto}
+
+O modelo cinemático direto, por sua vez, que relaciona a velocidade da carga com as derivadas das variáveis de junta no tempo fica dado por
+
 \begin{equation}
-A^{-1}
+\dot{\mathbf{p}}_m(\mathbf{q})
 = 
 \left[
-\begin{array}{ccc:c}
-0 & 0 & 1 & 0\\
-\frac{1}{2} & \frac{1}{2} & -\frac{1}{2} & 0\\[3pt]
--\frac{1}{2} & \frac{1}{2} & -\frac{1}{2} & 0\\[3pt]
-\hdashline
-\noalign{\vspace{3pt}}
-0 & 0 & 0 & 1
-\end{array} 
+  \begin{array}{c}
+    \dot{x}_m\\
+    \dot{y}_m\\
+    \dot{z}_m
+  \end{array} 
 \right]
 \end{equation}
 
-\section{Exercício 3:}
-\noindent\textbf{Enunciado:}\\
-\indent  O conjunto $\{0,1\}$ com as operações $+ \triangleq$ XOR e $\cdot \triangleq$ AND forma um campo? Justifique.
+com 
 
-\vspace{2mm}
+\begin{align}
+\dot{x}_m &= \dot{x}+\dot{l}\sin(\theta_x)\cos(\theta_y)\nonumber\\
+    &+ l\left(\cos(\theta_x)\cos(\theta_y)\dot{\theta}_x-\sin(\theta_x)\sin(\theta_y)\dot{\theta}_y\right)\\
+\dot{y}_m &= \dot{y} + \dot{l}\sin(\theta_y) + l\cos(\theta_y)\dot{\theta}_y\\
+\dot{z}_m &= -\dot{l}\cos(\theta_x)\cos(\theta_y)\nonumber\\
+    &+ l\left(\sin(\theta_x)\cos(\theta_y)\dot{\theta}_x+\cos(\theta_x)\sin(\theta_y)\dot{\theta}_y\right)
+\label{eq:direct_kinematics}
+\end{align}
 
-\noindent\textbf{Resolução:}\\
-\indent Dada a Tabela \ref{tab:truth_table}, que consiste na tabela verdade para as operações XOR e AND para todas combinações de dois valores do conjunto $\{0,1\}$
-\begin{table}[h!]
-  \begin{center}
-    \begin{tabular}{cc|cc}
-      $p$ & $q$ & $p\oplus q$ & $p\land q$\\
-      \hline
-      $0$ & $0$ & $0$ & $0$\\
-      $0$ & $1$ & $1$ & $0$\\
-      $1$ & $0$ & $1$ & $0$\\
-      $1$ & $1$ & $0$ & $1$\\
-    \end{tabular}
-  \end{center}
-  \caption{Tabela verdade para as operações XOR e AND.}
-  \label{tab:truth_table}
-\end{table}
+\subsection{Modelo Dinâmico}
 
-É possível determinar se esse conjunto com essas operações forma campo, ao verificar cada uma das propriedades requiridas na definição de campo, como segue:
+Aqui são consideradas as seguintes simplificações:
+
+\begin{itemize}
+  \item A massa da carga é considerada pontual;
+  \item A flexibilidade e massa do cabo são desprezadas;
+  \item O atrito é considerado como puramente viscoso, diretamente proporcial à velocidade das juntas. 
+\end{itemize}
+
+\noindent e a abordagem adotada para derivação do modelo dinâmico segue Equação de Euler-Lagrange dada por
+
+\begin{equation}
+  \frac{d}{dt}\left(\frac{\partial L(\mathbf{q}, \dot{\mathbf{q}})}{\partial \dot{q_i}}\right) - \frac{\partial L(\mathbf{q}, \dot{\mathbf{q}})}{\partial q_i} = Q_{g,i}
+\end{equation}
+
+\noindent onde $L(\mathbf{q}, \dot{\mathbf{q}})$ é o Lagrangiano, definido por
+
+\begin{equation}
+  L(\mathbf{q}, \dot{\mathbf{q}}) \triangleq K(\mathbf{q}, \dot{\mathbf{q}}) - P(\mathbf{q})\label{eq:lagrangian}
+\end{equation}
+
+\noindent para $K(\mathbf{q}, \dot{\mathbf{q}})$ a energia cinética de todo o sistema e $P(\mathbf{q})$ a energia potencial total da carga, e $Q_{g,i}$ um esforço genérico aplicado à i-ésima junta.
+
+Tal formulação, ainda que correta, não deixa explícita a influência de esforços não conservativos tais como atrito e opta por esforços genéricos $Q_{g,i}$ para os englobar. Visto que, na abordagem de modelagem adotada, é desejado considerar a influência dos atritos viscosos, opta-se por deixá-lo evidente. De fato, para sistemas cujos únicos esforços não conservativos são do tipo dissipativos proporcionais à velocidade, pode-se considerar $Q_{g,i}$ como tendo duas componentes como segue \cite{Meirovitch2012}: %pg 90
+
+\begin{equation}
+  Q_{g,i} = -\frac{\partial R(\dot{\mathbf{q}})}{\partial \dot{q_i}} + Q_{i}
+\end{equation}
+
+\noindent onde $Q_i$ é representa a componente do vetor de esforços externos relativa à i-ésima junta (e.g. esforço de atuação, ou perturbação na junta) e $R$ é dada pela função de dissipação de Rayleigh, caracterizada por
+
+\begin{equation}
+  R(\dot{\mathbf{q}}) = \frac{1}{2}\left(D_x\dot{x}^2+D_y\dot{y}^2+D_l\dot{l}^2\right)\label{eq:rayleigh}
+\end{equation}
+
+\noindent e que modela aqui o atrito viscoso do sistema. Onde $D_x$, $D_y$ e $D_l$ representam os coeficientes de amortecimento viscoso associados, respectivamente, ao movimentos nas direções $x,y,l$ e dependem unicamente no sistema de coordenadas e não do valor das velocidades.
+
+Dessa forma, é possível reescrever a Equação de Euler-Lagrange para sistemas não conservativos, cujas forças não conservativas são do tipo dissipativas proporcionais à velocidade como \cite{thiago2026}:
+
+\begin{equation}
+  \frac{d}{dt}\left(\frac{\partial L(\mathbf{q}, \dot{\mathbf{q}})}{\partial \dot{q_i}}\right) - \frac{\partial L(\mathbf{q}, \dot{\mathbf{q}})}{\partial q_i} + \frac{\partial R(\dot{\mathbf{q}})}{\partial \dot{q_i}} = Q_{i}\label{eq:euler_lagrange_non_conservative}
+\end{equation}
+
+A fim de calcular o Lagrangiano, a energia cinética do sistema e potencial da carga podem serem reescritas como
+
+\begin{align}
+  K(\mathbf{q}, \dot{\mathbf{q}}) &= \frac{1}{2}(M_x \dot{x}^2 + M_y \dot{y}^2 + M_{l} \dot{l}^2) + \frac{m}{2} v_m^2 \label{eq:kinematic_en}\\
+  P(\mathbf{q}) &= -m g l \cos(\theta_x) \cos(\theta_y)\label{eq:potential_en}
+\end{align}
+
+\noindent onde $M_x$ , $M_y$ e $M_l$ representam respectivamente as inércias equivalentes da ponte, carro e mecanismo de içamento
+e $g$ é a aceleração da gravidade. Nesse caso, a velocidade da carga $v_m$ pode ser determinada como segue
+
+\begin{align}
+  v_m^2 &= \dot{x}_m^2 + \dot{y}_m^2 + \dot{z}_m^2 \nonumber \\ 
+        & = \dot{x}^2 + \dot{y}^2 + \dot{l}^2 + l^2\cos^2(\theta_y)\dot{\theta}_x^2 + l^2\dot{\theta}_y^2 \nonumber\\
+        &+2\left(\sin(\theta_x)\cos(\theta_y)\dot{l}+ l\cos(\theta_x)\cos(\theta_y)\dot{\theta}_x\right. \nonumber\\
+        &- \left. l\sin(\theta_x)\sin(\theta_y)\dot{\theta}_y\right)\dot{x} \nonumber\\
+        &+2\left(sin(\theta_y)\dot{l}+l\cos(\theta_y)\dot{\theta}_y\right)\dot{y}\label{eq:vm}
+\end{align}
+
+Adotando $Q_i = \left[\begin{array}{ccccc}F_x &F_y &F_l &0 &0\end{array}\right]^T$ -- ou seja, forças externas apenas provenientes dos atuadores de junta, sem considerar perturbações-- podemos finalmente, a partir das equações \ref{eq:lagrangian}, \ref{eq:rayleigh}, \ref{eq:euler_lagrange_non_conservative}, \ref{eq:kinematic_en}, \ref{eq:potential_en} e \ref{eq:vm} derivar o modelo dinâmico não linear desse sistema, que resulta nas seguintes expressões\cite{lee}
+
+\begin{align}
+F_x &=\nonumber\\
+&\begin{pmatrix}
+(M_x + m)\ddot{x} + ml\cos(\theta_x)\cos(\theta_y)\ddot{\theta}_x - ml\sin(\theta_x)\sin(\theta_y)\ddot{\theta}_y \\
++ m\sin(\theta_x)\cos(\theta_y)\ddot{l} + D_x\dot{x} + 2m\cos(\theta_x)\cos(\theta_y)\dot{l}\dot{\theta}_x \\
+- 2m\sin(\theta_x)\sin(\theta_y)\dot{l}\dot{\theta}_y - ml\sin(\theta_x)\cos(\theta_y)\dot{\theta}_x^2 \\
+- 2ml\cos(\theta_x)\sin(\theta_y)\dot{\theta}_x\dot{\theta}_y - ml\sin(\theta_x)\cos(\theta_y)\dot{\theta}_y^2
+\end{pmatrix}\\
+F_y &=\nonumber\\
+&\begin{pmatrix}
+(M_y + m)\ddot{y} + ml \cos(\theta_y)\ddot{\theta}_y + m\sin(\theta_y)\ddot{l} \\
+{}+ D_y\dot{y} + 2m\cos(\theta_y)\dot{l}\dot{\theta}_y - ml\sin(\theta_y)\dot{\theta}_y^2
+\end{pmatrix}\\
+F_l &=\nonumber\\
+&\begin{pmatrix}
+(M_l + m)\ddot{l} + m\sin(\theta_x)\cos(\theta_y)\ddot{x} + m\sin(\theta_y)\ddot{y} + D_l\dot{l} \\
+{}- ml\cos^2(\theta_y)\dot{\theta}_x^2 - ml\dot{\theta}_y^2 - mg\cos(\theta_x)\cos(\theta_y)
+\end{pmatrix}\\
+0 &=\nonumber\\
+&\begin{pmatrix}
+ml^2\cos^2(\theta_y)\ddot{\theta}_x + ml\cos(\theta_x)\cos(\theta_y)\ddot{x} + 2ml\cos^2(\theta_y)\dot{l}\dot{\theta}_x \\
+{}- 2ml^2\sin(\theta_y)\cos(\theta_y)\dot{\theta}_x\dot{\theta}_y + mgl\sin(\theta_x)\cos(\theta_y)
+\end{pmatrix}\\
+0 &=\nonumber\\
+&\begin{pmatrix}
+ml^2\ddot{\theta}_y + ml\cos(\theta_y)\ddot{y} - ml\sin(\theta_x)\sin(\theta_y)\ddot{x} + 2ml\dot{l}\dot{\theta}_y \\
+{}+ ml^2\cos(\theta_y)\sin(\theta_y)\dot{\theta}_x^2 + mgl\cos(\theta_x)\sin(\theta_y)
+\end{pmatrix}
+\end{align}
+
+
+\begin{align*}
+\mathbf{F} &= \begin{bmatrix} F_x & F_y & F_l & 0 & 0 \end{bmatrix}^T, \\
+\mathbf{G}(\mathbf{q}) &= \begin{bmatrix} 0 & 0 & g_3 & g_4 & g_5 \end{bmatrix}^T, \\
+\mathbf{D} &= \begin{bmatrix}
+D_x & 0 & 0 & 0 & 0 \\
+0 & D_y & 0 & 0 & 0 \\
+0 & 0 & D_l & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0
+\end{bmatrix}, \\
+\mathbf{C}(\mathbf{q}, \dot{\mathbf{q}}) &= \begin{bmatrix}
+0 & 0 & c_{13} & c_{14} & c_{15} \\
+0 & 0 & c_{23} & 0 & c_{25} \\
+0 & 0 & 0 & c_{34} & c_{35} \\
+0 & 0 & c_{43} & c_{44} & c_{45} \\
+0 & 0 & c_{53} & c_{54} & c_{55}
+\end{bmatrix}, \\
+\mathbf{M}(\mathbf{q}) &= \begin{bmatrix}
+m_{11} & 0 & m_{13} & m_{14} & m_{15} \\
+0 & m_{22} & m_{23} & 0 & m_{25} \\
+m_{31} & m_{32} & m_{33} & 0 & 0 \\
+m_{41} & 0 & 0 & m_{44} & 0 \\
+m_{51} & m_{52} & 0 & 0 & m_{55}
+\end{bmatrix}.
+\end{align*}
+
+
+\begin{align*}
+m_{11} &= M_x + m, \\
+m_{13} &= m_{31} = m \sin(\theta_x) \cos(\theta_y), \\
+m_{14} &= m_{41} = ml \cos(\theta_x) \cos(\theta_y), \\
+m_{15} &= m_{51} = -ml \sin(\theta_x) \sin(\theta_y), \\
+m_{22} &= M_y + m, \\
+m_{23} &= m_{32} = m \sin(\theta_y), \\
+m_{25} &= m_{52} = ml \cos(\theta_y), \\
+m_{33} &= M_l + m, \\
+m_{44} &= ml^2 \cos^2(\theta_y), \\
+m_{55} &= ml^2, \\
+c_{13} &= m \cos(\theta_x) \cos(\theta_y) \dot{\theta}_x - m \sin(\theta_x) \sin(\theta_y) \dot{\theta}_y, \\
+c_{14} &= m \cos(\theta_x) \cos(\theta_y) \dot{l} - ml \sin(\theta_x) \cos(\theta_y) \dot{\theta}_x \\
+    &- ml \cos(\theta_x) \sin(\theta_y) \dot{\theta}_y, \\
+c_{15} &= -m \sin(\theta_x) \sin(\theta_y) \dot{l} - ml \cos(\theta_x) \sin(\theta_y) \dot{\theta}_x \\
+    &- ml \sin(\theta_x) \cos(\theta_y) \dot{\theta}_y, \\
+c_{23} &= m \cos(\theta_y) \dot{\theta}_y, \\
+c_{25} &= m \cos(\theta_y) \dot{l} - ml \sin(\theta_y) \dot{\theta}_y, \\
+c_{34} &= -ml \cos^2(\theta_y) \dot{\theta}_x, \\
+c_{35} &= -ml \dot{\theta}_y, \\
+c_{43} &= ml \cos^2(\theta_y) \dot{\theta}_x, \\
+c_{44} &= ml \cos^2(\theta_y) \dot{l} - ml^2 \sin(\theta_y) \cos(\theta_y) \dot{\theta}_y, \\
+c_{45} &= -ml^2 \sin(\theta_y) \cos(\theta_y) \dot{\theta}_x, \\
+c_{53} &= ml \dot{\theta}_y, \\
+c_{54} &= ml^2 \cos(\theta_y) \sin(\theta_y) \dot{\theta}_x, \\
+c_{55} &= ml \dot{l}, \\
+g_3 &= -mg \cos(\theta_x) \cos(\theta_y), \\
+g_4 &= mgl \sin(\theta_x) \cos(\theta_y), \\
+g_5 &= mgl \cos(\theta_x) \sin(\theta_y).
+\end{align*}
+
+\subsection{Linearização do Modelo Dinâmico}
+
+\begin{align*}
+\mathbf{F}_{\text{lin}} &= \begin{bmatrix} F_x & F_y & F_l & 0 & 0 \end{bmatrix}^T, \\
+\mathbf{G}_{\text{lin}}(\mathbf{q}) &= \begin{bmatrix} 0 & 0 & -mg & g\theta_x & g\theta_y \end{bmatrix}^T, \\
+\mathbf{D}_{\text{lin}} &= \begin{bmatrix}
+D_x & 0 & 0 & 0 & 0 \\
+0 & D_y & 0 & 0 & 0 \\
+0 & 0 & D_l & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0
+\end{bmatrix}, \\
+\mathbf{M}_{\text{lin}}(\mathbf{q}) &= \begin{bmatrix}
+M_x + m & 0 & 0 & ml & 0 \\
+0 & M_y + m & 0 & 0 & ml \\
+0 & 0 & M_l + m & 0 & 0 \\
+1 & 0 & 0 & l & 0 \\
+0 & 1 & 0 & 0 & l
+\end{bmatrix}.
+\end{align*}
+
+
+\subsection{Representação no Espaço de Estados do Modelo Dinâmico Linearizado}
+
+\section{Resposta do Sistema em Malha Aberta}
+
+Em trabalho futuro, esta seção irá abordar os seguintes tópicos:
 
 \begin{enumerate}
-  \item $\forall \alpha, \beta \in \mathcal{F}, \alpha + \beta \in \mathcal{F}$\\
-    Pela Tabela \ref{tab:truth_table}, verifica-se que para todas combinações de $p$ e $q$, o resultado da operação XOR está contido no conjunto, ou seja: $\forall p,q \in \{0,1\}, p \oplus q \in \{0,1\}$.
-  \item $\forall \alpha, \beta \in \mathcal{F}, \alpha + \beta = \beta + \alpha \text{ e } \alpha\beta = \beta\alpha$\\
-    As operações XOR e AND são comutativas por definição, então essa afirmação se verifica. De forma mais explícita, tem-se:
-    \begin{table}[H]
-      \begin{center}
-        \begin{tabular}{cc|cc}
-          $\alpha$ & $\beta$ & $\alpha\oplus \beta$ & $\beta\oplus \alpha$\\
-          \hline
-          $0$ & $0$ & $0$ & $0$\\
-          $0$ & $1$ & $1$ & $1$\\
-          $1$ & $0$ & $1$ & $1$\\
-          $1$ & $1$ & $0$ & $0$\\
-        \end{tabular}
-      \end{center}
-      \caption{Comutatividade da operação XOR.}
-      \label{tab:xor_comutative}
-    \end{table}
-    \begin{table}[H]
-      \begin{center}
-        \begin{tabular}{cc|cc}
-          $\alpha$ & $\beta$ & $\alpha\land \beta$ & $\beta\land \alpha$\\
-          \hline
-          $0$ & $0$ & $0$ & $0$\\
-          $0$ & $1$ & $0$ & $0$\\
-          $1$ & $0$ & $0$ & $0$\\
-          $1$ & $1$ & $1$ & $1$\\
-        \end{tabular}
-      \end{center}
-      \caption{Comutatividade da operação AND.}
-      \label{tab:and_comutative}
-    \end{table}
-  \item $\forall \alpha, \beta, \gamma \in \mathcal{F}, (\alpha + \beta) + \gamma = \alpha + (\beta + \gamma) \text{ e } (\alpha\beta)\gamma = \alpha(\beta\gamma)$\\
-    As operações XOR e AND são associativas por definição, então essa afirmação se verifica. De forma mais explícita, tem-se:
-    \begin{table}[H]
-      \begin{center}
-        \begin{tabular}{ccc|cc}
-          $\alpha$ & $\beta$ & $\gamma$ & $(\alpha\oplus \beta) \oplus \gamma$ & $\alpha\oplus (\beta \oplus \gamma)$\\
-          \hline
-          $0$ & $0$ & $0$ & $0$ & $0$\\
-          $0$ & $0$ & $1$ & $1$ & $1$\\
-          $0$ & $1$ & $0$ & $1$ & $1$\\
-          $0$ & $1$ & $1$ & $0$ & $0$\\
-          $1$ & $0$ & $0$ & $1$ & $1$\\
-          $1$ & $0$ & $1$ & $0$ & $0$\\
-          $1$ & $1$ & $0$ & $0$ & $0$\\
-          $1$ & $1$ & $1$ & $0$ & $0$
-        \end{tabular}
-      \end{center}
-      \caption{Associatividade da operação XOR.}
-      \label{tab:xor_associative}
-    \end{table}
-    \begin{table}[H]
-      \begin{center}
-        \begin{tabular}{ccc|cc}
-          $\alpha$ & $\beta$ & $\gamma$ & $(\alpha\land \beta) \land \gamma$ & $\alpha\land (\beta \land \gamma)$\\
-          \hline
-          $0$ & $0$ & $0$ & $0$ & $0$\\
-          $0$ & $0$ & $1$ & $0$ & $0$\\
-          $0$ & $1$ & $0$ & $0$ & $0$\\
-          $0$ & $1$ & $1$ & $0$ & $0$\\
-          $1$ & $0$ & $0$ & $0$ & $0$\\
-          $1$ & $0$ & $1$ & $0$ & $0$\\
-          $1$ & $1$ & $0$ & $0$ & $0$\\
-          $1$ & $1$ & $1$ & $1$ & $1$
-        \end{tabular}
-      \end{center}
-      \caption{Associatividade da operação AND.}
-      \label{tab:and_associative}
-    \end{table}
-  \item $\forall \alpha, \beta, \gamma \in \mathcal{F}, \alpha(\beta + \gamma) = \alpha\beta + \alpha\gamma$\\
-    A operação AND é distributiva na operação XOR por definição, então essa afirmação se verifica. De forma mais explícita, tem-se:
-    \begin{table}[H]
-      \begin{center}
-        \begin{tabular}{ccc|cc}
-          $\alpha$ & $\beta$ & $\gamma$ & $\alpha\land (\beta\oplus \gamma)$ & $\alpha\land\beta \oplus \alpha\land\gamma$\\
-          \hline
-          $0$ & $0$ & $0$ & $0$ & $0$\\
-          $0$ & $0$ & $1$ & $0$ & $0$\\
-          $0$ & $1$ & $0$ & $0$ & $0$\\
-          $0$ & $1$ & $1$ & $0$ & $0$\\
-          $1$ & $0$ & $0$ & $0$ & $0$\\
-          $1$ & $0$ & $1$ & $1$ & $1$\\
-          $1$ & $1$ & $0$ & $1$ & $1$\\
-          $1$ & $1$ & $1$ & $0$ & $0$
-        \end{tabular}
-      \end{center}
-      \caption{Distribuitividade da operação AND na operação XOR.}
-      \label{tab:and_xor_distributive}
-    \end{table}
-  \item $\exists n_+, n_\times \in \mathcal{F} \mid n_+ + \alpha = \alpha \text{ e } n_\times\alpha = \alpha\text{, }\forall \alpha \in \mathcal{F}$\\
-  Escolhendo $n_+ = 0$, obtem-se
-    \begin{table}[H]
-      \begin{center}
-        \begin{tabular}{cc|c}
-          $\alpha$ & $n_+$ & $\alpha\oplus n_+$\\
-          \hline
-          $0$ & $0$ & $0$\\
-          $1$ & $0$ & $1$\\
-        \end{tabular}
-      \end{center}
-      \caption{Operação XOR para $0$ como elemento neutro.}
-      \label{tab:xor_identity_element}
-    \end{table}
-    Verifica-se que $n_+ + \alpha = \alpha \text{, }\forall \alpha \in \{0,1\}$. De forma similar, escolhendo $n_\times = 1$, obtem-se
-    \begin{table}[H]
-      \begin{center}
-        \begin{tabular}{cc|c}
-          $\alpha$ & $n_\times$ & $\alpha\land n_\times$\\
-          \hline
-          $0$ & $1$ & $0$\\
-          $1$ & $1$ & $1$\\
-        \end{tabular}
-      \end{center}
-      \caption{Operação AND para $1$ como elemento neutro.}
-      \label{tab:and_identity_element}
-    \end{table}
- Verifica-se que $n_\times\alpha = \alpha\text{, }\forall \alpha \in \{0,1\}$.
-  \item $\forall \alpha \in \mathcal{F}, \exists \bar{\alpha} \in \mathcal{F} \mid \bar{\alpha} + \alpha = n_+$\\
-    Escolhendo $\bar{0} = 0$ e $\bar{1} = 1$, obtemos
-    \begin{table}[H]
-      \begin{center}
-        \begin{tabular}{cc|cc}
-          $\alpha$ & $\bar{\alpha}$ & $\bar{\alpha}\oplus\alpha$ & $n_+$\\
-          \hline
-          $0$ & $0$ & $0$ & $0$\\
-          $1$ & $1$ & $0$ & $0$
-        \end{tabular}
-      \end{center}
-      \caption{Elemento oposto da operação XOR.}
-      \label{tab:xor_oposite}
-    \end{table}
-    Verifica-se $\forall \alpha \in \{0,1\}, \exists \bar{\alpha} \in \{0,1\} \mid \bar{\alpha} \oplus \alpha = n_+ = 0$.
-  \item $\forall \alpha \in \mathcal{F}, \alpha \neq n_+, \exists \tilde{\alpha} \in \mathcal{F} \mid \tilde{\alpha}\alpha = n_\times$\\ 
-    Excluindo $\alpha = n_+ = 0$ e escolhendo $\tilde{1} = 1$, obtemos
-    \begin{table}[H]
-      \begin{center}
-        \begin{tabular}{cc|cc}
-          $\alpha$ & $\tilde{\alpha}$ & $\tilde{\alpha}\land\alpha$ & $n_\times$\\
-          \hline
-          $1$ & $1$ & $1$ & $1$\\
-        \end{tabular}
-      \end{center}
-      \caption{Elemento inverso da operação AND.}
-      \label{tab:and_inverse}
-    \end{table}
-    Verifica-se $\forall \alpha \in \{0,1\}, \alpha \neq n_+ = 0, \exists \tilde{\alpha} \in \{0,1\} \mid \tilde{\alpha}\alpha = n_\times = 1$.
+  \item Resposta temporal à entrada zero do sistema em malha aberta para diferentes condições iniciais;
+  \item Resposta temporal ao estado zero do sistema em malha aberta para referências de interesse;
+  \item Apresentação dos diagramas de simulação em malha aberta e comparação dos modelos não linear e linearizado;
+  \item Analise a estabilidade, observabilidade e controlabilidade do sistema; caso o sistema não seja controlável e/ou observável, será analisada a decomposição de Kalman do mesmo.
 \end{enumerate}
 
-Concluindo, o conjunto $\{0,1\}$ com as operações $+ \triangleq$ XOR e $\cdot \triangleq$ AND forma um campo.
+\section{Projeto de Controlador e Observador de Estados}
 
-\section{Exercício 4:}
-\noindent\textbf{Enunciado:}\\
-\indent Determine se o conjunto $\mathcal{V}$ abaixo é LD ou LI nos espaços $(\R^2(s),\R)$ e $(\R^2(s),\R(s))$.
-\begingroup
-\renewcommand*{\arraystretch}{1.5}
-\begin{equation}
-  \mathcal{V} = \left\{\begin{bmatrix} \frac{1}{s+1} \\ \frac{1}{s+2} \end{bmatrix}, \begin{bmatrix} \frac{s+2}{(s+1)(s+3)} \\ \frac{1}{s+3} \end{bmatrix} \right\}
-\end{equation}
-\endgroup
+Em trabalho futuro, esta seção irá abordar os seguintes tópicos:
 
-\vspace{2mm}
+\begin{enumerate}
+  \item Formulação dos requisitos de controle;
+  \item Determinação da abordagem de controle;
+  \item Projeto de um controlador em malha fechada;
+  \item Projeto de um observador de estados para implementação do controle proposto, justificando a escolha dos polos do observador em relação ao sistema em malha fechada;
+  \item Apresentação dos diagramas de simulação em malha fechada;
+  \item Análise dos resultados e comparação de desempenho em malha aberta e malha fechada sem e com observador de estados.
+\end{enumerate}
 
-\noindent\textbf{Resolução:}\\
-\indent Diz-se que um conjunto $X = \{x_1,\ldots, x_N\} \in (\mathcal{X},\mathcal{F})$ é linearmente dependente sse $\exists \alpha_1,\ldots,\alpha_N \in \mathcal{F}, \exists \alpha_i \neq n_\times$ tal que $\sum_{i=1}^{n}\alpha_i x_i = 0$. Para o conjunto em questão, temos:
+\section{Conclusão}
 
-\begin{equation}
-  \alpha_1\begin{bmatrix} \frac{1}{s+1} \\ \frac{1}{s+2} \end{bmatrix} + \alpha_2\begin{bmatrix} \frac{s+2}{(s+1)(s+3)} \\ \frac{1}{s+3} \end{bmatrix} = 0
-  \label{eq:linear_dependency}
-\end{equation}
+Em trabalho futuro, esta seção discutirá de forma resumida tudo que foi abordado, desde os diferentes modelos do sistema, até o projeto de controle e os resultados obtidos.
 
-Para $(\mathcal{X},\mathcal{F}) = (\R^2(s),\R)$, não existem valores escalares $\alpha_1,\alpha_2 \in \R$ que satisfaçam a Equação \ref{eq:linear_dependency}, pois não existem escalares em $\R$ que, ao multiplicarem uma função racional com coeficientes em $\R$ com numerador de ordem $0$ e denominador de $1$, resultem em uma função racional com coeficientes em $\R$ com numerador de ordem $1$ e denominador de $2$. Ou seja, $\mathcal{V}$ é um vetor linearmente independente no espaço $(\R^2(s),\R)$.
-
-Entretanto, para $(\mathcal{X},\mathcal{F}) = (\R^2(s),\R(s))$, basta escolher $\alpha_1= \frac{s+2}{s+3} \in \R(s)$ e $\alpha_2 = -1 \in \R(s)$ para que a Equação \ref{eq:linear_dependency} se verifique. Ou seja, $\mathcal{V}$ é um vetor linearmente dependente no espaço $(\R^2(s),\R(s))$.
 \bibliographystyle{IEEEtran.bst}
 \bibliography{base.bib}
 
