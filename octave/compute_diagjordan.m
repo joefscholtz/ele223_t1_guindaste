@@ -30,8 +30,10 @@ Ax = [ -Dx/Mx,        0, 0,  (m*g)/Mx ;
         1,            0, 0,  0 ;
         0,            1, 0,  0 ];
         
-% Bx considera apenas a entrada f_x
+% Bx considera a entrada f_x e Bgx considera o distúrbio da gravidade
 Bx = [ 1/Mx ; -1/(Mx*l0) ; 0 ; 0 ]; 
+Bgx = -Bx; 
+
 Cx = [ 0, 0, 1, 0 ]; % Saída é a posição x
 Dx_mat = 0;
 
@@ -41,6 +43,7 @@ tf_x = tf(sys_x);
 % Transformação de Similaridade
 [Vx, Jx] = eig(Ax); 
 Bx_diag = inv(Vx) * Bx;
+Bgx_diag = inv(Vx) * Bgx;
 Cx_diag = Cx * Vx;
 
 disp('--- 1) SUBSISTEMA X (PONTE) ---');
@@ -48,9 +51,10 @@ disp('Funcao de Transferencia X(s)/Fx(s):');
 tf_x
 disp('Matriz de Transformacao Vx:');
 disp(Vx)
-disp('Novo modelo Diagonal/Jordan (Ax_diag, Bx_diag, Cx_diag):');
+disp('Novo modelo Diagonal/Jordan (Ax_diag, Bx_diag, Bgx_diag, Cx_diag):');
 disp('Ax_diag = Jx ='); disp(Jx)
 disp('Bx_diag ='); disp(Bx_diag)
+disp('Bgx_diag ='); disp(Bgx_diag)
 disp('Cx_diag ='); disp(Cx_diag)
 
 % =========================================================================
@@ -63,6 +67,8 @@ Ay = [ -Dy/My,        0, 0,  (m*g)/My ;
         0,            1, 0,  0 ];
         
 By = [ 1/My ; -1/(My*l0) ; 0 ; 0 ]; 
+Bgy = -By;
+
 Cy = [ 0, 0, 1, 0 ]; % Saída é a posição y
 Dy_mat = 0;
 
@@ -72,6 +78,7 @@ tf_y = tf(sys_y);
 % Transformação de Similaridade
 [Vy, Jy] = eig(Ay);
 By_diag = inv(Vy) * By;
+Bgy_diag = inv(Vy) * Bgy;
 Cy_diag = Cy * Vy;
 
 disp('--- 2) SUBSISTEMA Y (CARRO) ---');
@@ -79,9 +86,10 @@ disp('Funcao de Transferencia Y(s)/Fy(s):');
 tf_y
 disp('Matriz de Transformacao Vy:');
 disp(Vy)
-disp('Novo modelo Diagonal/Jordan (Ay_diag, By_diag, Cy_diag):');
+disp('Novo modelo Diagonal/Jordan (Ay_diag, By_diag, Bgy_diag, Cy_diag):');
 disp('Ay_diag = Jy ='); disp(Jy)
 disp('By_diag ='); disp(By_diag)
+disp('Bgy_diag ='); disp(Bgy_diag)
 disp('Cy_diag ='); disp(Cy_diag)
 
 % =========================================================================
@@ -92,6 +100,8 @@ Al = [ -Dl/(Ml+m), 0 ;
         1,         0 ];
         
 Bl = [ 1/(Ml+m) ; 0 ]; 
+Bgl = -Bl;
+
 Cl = [ 0, 1 ]; % Saída é a posição l
 Dl_mat = 0;
 
@@ -101,6 +111,7 @@ tf_l = tf(sys_l);
 % Transformação de Similaridade
 [Vl, Jl] = eig(Al);
 Bl_diag = inv(Vl) * Bl;
+Bgl_diag = inv(Vl) * Bgl;
 Cl_diag = Cl * Vl;
 
 disp('--- 3) SUBSISTEMA L (IÇAMENTO) ---');
@@ -108,9 +119,10 @@ disp('Funcao de Transferencia L(s)/Fl(s):');
 tf_l
 disp('Matriz de Transformacao Vl:');
 disp(Vl)
-disp('Novo modelo Diagonal/Jordan (Al_diag, Bl_diag, Cl_diag):');
+disp('Novo modelo Diagonal/Jordan (Al_diag, Bl_diag, Bgl_diag, Cl_diag):');
 disp('Al_diag = Jl ='); disp(Jl)
 disp('Bl_diag ='); disp(Bl_diag)
+disp('Bgl_diag ='); disp(Bgl_diag)
 disp('Cl_diag ='); disp(Cl_diag)
 
 
