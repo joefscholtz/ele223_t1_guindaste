@@ -19,6 +19,10 @@
 \usepackage{breqn}
 \usepackage{xfrac}
 
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta, decorations.markings}
+
 \newtheorem{lema}{Lema}
 \newcommand{\R}{\mathds{R}}
 
@@ -318,7 +322,7 @@ g_5 &= mgl \cos(\theta_x) \sin(\theta_y).
 
 Vale notar que a matriz $\mathbf{M}(\mathbf{q})$ é simétrica positiva definida, e portanto inversível, sob as restrições $l>0$, $|\theta_y| < \sfrac{\pi}{2}$. Tais condições, juntamente com o fato de que as massas são todas positivas, serão consideradas satisfeitas no regime de operação adotado, uma vez que representam que a carga sempre está abaixo do carro.
 
-\subsection{Linearização do Modelo Dinâmico}
+\subsection{Aproximação do Modelo Dinâmico em torno de um ponto de equilíbrio}
 
 O modelo matemático previamente apresentado, constituído pelas Equações \ref{eq:matricial_euler_lagrange} até \ref{eq:mass_matrix}, pode ser linearizado em torno de um ponto de equilíbrio vertical sob as seguintes condições\cite{lee}
 
@@ -365,47 +369,52 @@ Desta forma, aplicando tais aproximações ao modelo não linear caracterizado p
 \begin{align}
   (M_x+m)\ddot{x}+D_x\dot{x}+ml\ddot{\theta}_x &= f_x\\
   (M_y+m)\ddot{y}+D_y\dot{y}+ml\ddot{\theta}_y &= f_y\\
-  (M_l+m)\ddot{l}+D_l\dot{y}-mg &= f_l\\
+  (M_l+m)\ddot{l}+D_l\dot{l}-mg &= f_l\\
   l\ddot{\theta}_x+\ddot{x}+g{\theta}_x &= 0\\
   l\ddot{\theta}_y+\ddot{y}+g{\theta}_y &= 0
 \end{align}
 
 Esta representação consistem em três subsistemas mutualmente desacoplados: 
 \begin{itemize}
-  \item Subsistema da ponte: estados $x$ e $\theta_x$;\\
-  \item Subsistema do carro: estados $y$ e $\theta_y$;\\
+  \item Subsistema da ponte: estados $x$ e $\theta_x$, condicionado ao parâmetro compartilhado $l$;\\
+  \item Subsistema do carro: estados $y$ e $\theta_y$, condicionado ao parâmetro compartilhado $l$;\\
   \item Subsistema de içamento: estado $l$;
 \end{itemize}
+
+Dessa forma é possível reescrever a forma matricial do modelo como segue
 
 \begin{equation}
   \mathbf{M}_{lin}(\mathbf{q})\ddot{\mathbf{q}}+\mathbf{D}_{lin}\dot{\mathbf{q}}+\mathbf{g}_{lin}(\mathbf{q}) = \mathbf{f}_{lin}\label{eq:matricial_euler_lagrange_linear}
 \end{equation}
 
+\noindent em que, devido às aproximações adotadas, a matriz $\mathbf{C}_{lin}(\mathbf{q}, \dot{\mathbf{q}})$ se torna nula. os termos da Equação \ref{eq:matricial_euler_lagrange_linear} são
+
 \begin{align}
-\mathbf{f}_{\text{lin}} &= \begin{bmatrix} f_x & f_y & f_l & 0 & 0 \end{bmatrix}^T, \\
-\mathbf{g}_{\text{lin}}(\mathbf{q}) &= \begin{bmatrix} 0 & 0 & -mg & g\theta_x & g\theta_y \end{bmatrix}^T, \\
+\mathbf{f}_{\text{lin}} &= \begin{bmatrix} f_x & f_y & f_l & 0 & 0 \end{bmatrix}^T \\
+\mathbf{g}_{\text{lin}}(\mathbf{q}) &= \begin{bmatrix} 0 & 0 & -mg & g\theta_x & g\theta_y \end{bmatrix}^T \\
 \mathbf{D}_{\text{lin}} &= \begin{bmatrix}
 D_x & 0 & 0 & 0 & 0 \\
 0 & D_y & 0 & 0 & 0 \\
 0 & 0 & D_l & 0 & 0 \\
 0 & 0 & 0 & 0 & 0 \\
 0 & 0 & 0 & 0 & 0
-\end{bmatrix}, \\
+\end{bmatrix} \\
 \mathbf{M}_{\text{lin}}(\mathbf{q}) &= \begin{bmatrix}
 M_x + m & 0 & 0 & ml & 0 \\
 0 & M_y + m & 0 & 0 & ml \\
 0 & 0 & M_l + m & 0 & 0 \\
 1 & 0 & 0 & l & 0 \\
 0 & 1 & 0 & 0 & l
-\end{bmatrix}.
+\end{bmatrix} \label{eq:Mlin}
 \end{align}
 
+Vale destacar que, diferentemente do que se verificava com a matriz $\mathbf{M}(\mathbf{q})$, a matriz $\mathbf{M}_{\text{lin}}(\mathbf{q})$ não é simétrica. Contudo, é invertível sob as restrições de que as massas sejam positiva e $l>0$, uma vez que $\det(\mathbf{M}_{\text{lin}}(\mathbf{q})) = (M_l+m)M_xM_yl^2 > 0$. Tais condições serão consideradas satisfeitas no regime de operação adotado.
 
 \subsection{Modelo Dinâmico quasi-LPV}
 
-Para formular uma representação no espaço de estados do modelo dinâmico linearizado, primeiro se separa o vetor gravidade $\mathbf{G}_{\text{lin}}(\mathbf{q})$ em dois termos: um constante, $\mathbf{G}_0$, e um termo dependente das variáveis de junta $\mathbf{G}_q \mathbf{q}$ da seguinte forma
+Com objetivo de posteriormente formular uma representação no espaço de estados do modelo dinâmico linearizado, primeiro se separa o vetor gravidade $\mathbf{g}_{\text{lin}}(\mathbf{q})$ em dois termos: um constante, $\mathbf{g}_0$, e um termo dependente das variáveis de junta $\mathbf{G}_q \mathbf{q}$ da seguinte forma
 \begin{align}
-  \mathbf{G}_{\text{lin}}(\mathbf{q}) &= \mathbf{G}_0 + \mathbf{G}_q \mathbf{q} \nonumber\\
+  \mathbf{g}_{\text{lin}}(\mathbf{q}) &= \mathbf{g}_0 + \mathbf{G}_q \mathbf{q} \nonumber\\
 &=
 \begin{bmatrix} 0 \\ 0 \\ -mg \\ 0 \\ 0 \end{bmatrix} + 
 \begin{bmatrix}
@@ -420,85 +429,22 @@ Para formular uma representação no espaço de estados do modelo dinâmico line
 
 Em seguida, realiza-se a inversão da matriz de massa $\mathbf{M}_{\text{lin}}(\mathbf{q})$, resultando em
 \begin{equation}
-\mathbf{M}_{\text{lin}}^{-1} = \begin{bmatrix}
+\mathbf{M}_{\text{lin}}^{-1}(\mathbf{q}) = \begin{bmatrix}
 \frac{1}{M_x} & 0 & 0 & -\frac{m}{M_x} & 0 \\[6pt]
 0 & \frac{1}{M_y} & 0 & 0 & -\frac{m}{M_y} \\[6pt]
 0 & 0 & \frac{1}{M_l + m} & 0 & 0 \\[6pt]
 -\frac{1}{M_x l} & 0 & 0 & \frac{M_x + m}{M_x l} & 0 \\[6pt]
 0 & -\frac{1}{M_y l} & 0 & 0 & \frac{M_y + m}{M_y l}
-\end{bmatrix}
+\end{bmatrix} \label{eq:Mlin-1}
 \end{equation}
 
-\subsection{Representação em Espaço de Estados do Modelo Dinâmico quasi-LPV}
-
-Dessa forma, é possível isolar $\ddot{\mathbf{q}}$ na Equação \ref{eq:matricial_euler_lagrange_linear} resultando em
-\begin{equation}
-\ddot{\mathbf{q}} = -\mathbf{M}_{\text{lin}}^{-1}\mathbf{D}_{\text{lin}}\dot{\mathbf{q}} - \mathbf{M}_{\text{lin}}^{-1}\mathbf{G}_q \mathbf{q} - \mathbf{M}_{\text{lin}}^{-1}\mathbf{G}_0 + \mathbf{M}_{\text{lin}}^{-1}\mathbf{F}_{\text{lin}}
-\end{equation}
-
-Defining the state vector as $\mathbf{x} = [\dot{\mathbf{q}}^T \quad \mathbf{q}^T]^T$, we reach the final state-space form:
-\begin{equation}
-\dot{\mathbf{x}} = \mathbf{A}\mathbf{x} + \mathbf{B}_g\mathbf{G}_0 + \mathbf{B}_F\mathbf{F}_{\text{lin}}
-\end{equation}
-
-where the matrices are fully expanded in terms of your original scalar parameters:
-
-\begin{adjustbox}{width=0.95\linewidth}
-  \parbox{\linewidth}{
-\begin{align}
-&\mathbf{A} = \begin{bmatrix} -\mathbf{M}_{\text{lin}}^{-1}\mathbf{D}_{\text{lin}} & -\mathbf{M}_{\text{lin}}^{-1}\mathbf{G}_q \\ \mathbf{I}_{5\times5} & \mathbf{0}_{5\times5} \end{bmatrix} = \nonumber\\
-&\left[\begin{array}{ccccc:ccccc}
--\frac{D_x}{M_x} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & \frac{mg}{M_x} & 0 \\
-0 & -\frac{D_y}{M_y} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & \frac{mg}{M_y} \\
-0 & 0 & -\frac{D_l}{M_l + m} & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\[6pt]
-\frac{D_x}{M_x l} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & -\frac{g(M_x + m)}{M_x l} & 0 \\
-0 & \frac{D_y}{M_y l} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & -\frac{g(M_y + m)}{M_y l} \\
-\hdashline\\[-10pt]
-1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 
-\end{array}\right]
-\end{align}
-}
-\end{adjustbox}
-
-\begin{align}
-&\mathbf{B}_g = \begin{bmatrix} -\mathbf{M}_{\text{lin}}^{-1} \\ \mathbf{0}_{5\times5} \end{bmatrix} = \nonumber\\
-&\left[\begin{array}{ccccc}
--\frac{1}{M_x} & 0 & 0 & \frac{m}{M_x} & 0 \\
-0 & -\frac{1}{M_y} & 0 & 0 & \frac{m}{M_y} \\
-0 & 0 & -\frac{1}{M_l + m} & 0 & 0 \\
-\frac{1}{M_x l} & 0 & 0 & -\frac{M_x + m}{M_x l} & 0 \\
-0 & \frac{1}{M_y l} & 0 & 0 & -\frac{M_y + m}{M_y l} \\
-\hdashline
-0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 0 & 0
-\end{array}\right]
-\end{align}
-
-\begin{align}
-&\mathbf{B}_F = \begin{bmatrix} \mathbf{M}_{\text{lin}}^{-1} \\ \mathbf{0}_{5\times5} \end{bmatrix} = \nonumber\\
-&\left[\begin{array}{ccccc}
-\frac{1}{M_x} & 0 & 0 & -\frac{m}{M_x} & 0 \\
-0 & \frac{1}{M_y} & 0 & 0 & -\frac{m}{M_y} \\
-0 & 0 & \frac{1}{M_l + m} & 0 & 0 \\
--\frac{1}{M_x l} & 0 & 0 & \frac{M_x + m}{M_x l} & 0 \\
-0 & -\frac{1}{M_y l} & 0 & 0 & \frac{M_y + m}{M_y l} \\
-\hdashline
-0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 0 & 0
-\end{array}\right]
-\end{align}
+No entanto, além da dependência direta de $\mathbf{M}_{\text{lin}}(\mathbf{q})$ na variável de junta $l$, como pode ser visto na Equação \ref{eq:Mlin}, aqui observa-se a partir da Equação \ref{eq:Mlin-1} em sua inversa, $\mathbf{M}_{\text{lin}}^{-1}(\mathbf{q})$, uma dependência racional das variáveis de junta, a saber, a partir do termos contendo $\sfrac{1}{l}$. Consequentemente, para que o modelo seja linear e invariante no tempo (LTI), a variável de junta $l$ deve ser fixada em um valor constante $l_0$. Diante desta dependência paramétrica, adota-se então, uma representação LPV (do inglês, \textit{Linear Parameter-Varying}, cuja tradução consagrada pelo uso é "Sistema Linear com Parâmetros Variantes"), permitindo que o modelo capture a variação de $l$ ao longo da faixa de operação do sistema. A fim de explicitar esta dependência, passa-se a escrever $\mathbf{M}_{\text{lin}}(\mathbf{q})$ e $\mathbf{M}_{\text{lin}}^{-1}(\mathbf{q})$ como $\mathbf{M}_{\text{lin}}(l)$ e $\mathbf{M}_{\text{lin}}^{-1}(l)$ respectivamente, e os termos contendo $l$ nessas matrizes passam a ser paramétricos\cite{thiago2026}.
 
 \subsection{Representação na forma Diagonal/Jordan}
+
+Dado que o modelo desenvolvido se comporta como um sistema linear variante em parâmetros (quasi-LPV), a dinâmica do balanço pendular é alterada com a variação do comprimento do cabo de içamento $l$. 
+
+Para avaliar a estabilidade e a mudança das frequências naturais do sistema perante o içamento e rebaixamento da carga, calculou-se os autovalores da matriz de estados $\mathbf{A}(l)$ no intervalo de operação compreendido entre $l \in [0{,}1, 1{,}0]$ m, empregando os valores dos parâmetros físicos apresentados na Tabela \ref{tab:and_xor_distributive}.
 
 \begin{table}[H]
   \begin{center}
@@ -520,6 +466,243 @@ where the matrices are fully expanded in terms of your original scalar parameter
   \caption{Valor parâmetros do modelo. Fonte: \cite{thiago2026}}
   \label{tab:and_xor_distributive}
 \end{table}
+
+A Figura \ref{fig:root_locus_x} e a Figura \ref{fig:root_locus_y} ilustram o deslocamento contínuo dos polos dos eixos da Ponte e do Carro, respectivamente, no plano-$s$. A Figura \ref{fig:root_locus_l}, por sua vez, apresenta os polos do eixo de içamento $L$, que permanecem inalterados, visto que sua dinâmica linear independe do comprimento do cabo.
+
+% ==========================================
+% GRÁFICO 1: EIXO X (Ponte)
+% ==========================================
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=0.95\linewidth,
+            height=0.95\linewidth,
+            title={\textbf{Autovalores do subsistema da Ponte}},
+            xlabel={Eixo Real ($\sigma$)},
+            ylabel={Eixo Imaginário ($j\omega$)},
+            grid=both,
+            grid style={dotted, gray!95},
+            extra x ticks={0},
+            extra x tick style={grid=major, major grid style={black, solid}},
+            extra y ticks={0},
+            extra y tick style={grid=major, major grid style={black, solid}}
+        ]
+        
+        % 1. Polo complexo superior (X4)
+        \addplot [thick, blue, dashed] table [x=ReX4, y=ImX4, col sep=comma] {../octave/lugar_das_raizes.csv};
+        % \addlegendentry{Eixo $X$ (Ponte)}
+        \addplot [thick, blue, draw opacity=0, forget plot, postaction={decorate}, decoration={markings, mark=between positions 0.15 and 0.95 step 0.15 with {\arrow[solid, blue]{Stealth}}}] table [x=ReX4, y=ImX4, col sep=comma] {../octave/lugar_das_raizes.csv};
+        
+        % 2. Polo complexo inferior (X1) 
+        \addplot [thick, blue, dashed, forget plot] table [x=ReX1, y=ImX1, col sep=comma] {../octave/lugar_das_raizes.csv};
+        \addplot [thick, blue, draw opacity=0, forget plot, postaction={decorate}, decoration={markings, mark=between positions 0.15 and 0.95 step 0.15 with {\arrow[solid, blue]{Stealth}}}] table [x=ReX1, y=ImX1, col sep=comma] {../octave/lugar_das_raizes.csv};
+        
+        % 3. Polo real rápido (X3 em -16) - UMA ÚNICA SETA
+        \addplot [thick, blue, dashed, forget plot, each nth point=499, postaction={decorate}, decoration={markings, mark=at position 0.8 with {\arrow[solid, blue]{Stealth}}}] table [x=ReX3, y=ImX3, col sep=comma] {../octave/lugar_das_raizes.csv};
+        
+        % 4. Polo real na origem (X2) - ESTÁTICO (Sem seta)
+        \addplot [thick, blue, dashed, forget plot] table [x=ReX2, y=ImX2, col sep=comma] {../octave/lugar_das_raizes.csv};
+        
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Lugar das raízes do subsistema da Ponte (eixo $X$) para $l$ variando de $0{,}1$ m a $1{,}0$ m. As setas indicam o sentido de deslocamento dos polos conforme $l$ aumenta.}
+    \label{fig:root_locus_x}
+\end{figure}
+
+% ==========================================
+% GRÁFICO 2: EIXO Y (Carro)
+% ==========================================
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=0.95\linewidth,
+            height=0.95\linewidth,
+            title={\textbf{Autovalores do subsistema do Carro}},
+            xlabel={Eixo Real ($\sigma$)},
+            ylabel={Eixo Imaginário ($j\omega$)},
+            grid=both,
+            grid style={dotted, gray!95},
+            extra x ticks={0},
+            extra x tick style={grid=major, major grid style={black, solid}},
+            extra y ticks={0},
+            extra y tick style={grid=major, major grid style={black, solid}}
+        ]
+        
+        % 1. Polo complexo superior (Y4)
+        \addplot [thick, red, dashed] table [x=ReY4, y=ImY4, col sep=comma] {../octave/lugar_das_raizes.csv};
+        % \addlegendentry{Eixo $Y$ (Carro)}
+        \addplot [thick, red, draw opacity=0, forget plot, postaction={decorate}, decoration={markings, mark=between positions 0.15 and 0.95 step 0.15 with {\arrow[solid, red]{Stealth}}}] table [x=ReY4, y=ImY4, col sep=comma] {../octave/lugar_das_raizes.csv};
+        
+        % 2. Polo complexo inferior (Y1)
+        \addplot [thick, red, dashed, forget plot] table [x=ReY1, y=ImY1, col sep=comma] {../octave/lugar_das_raizes.csv};
+        \addplot [thick, red, draw opacity=0, forget plot, postaction={decorate}, decoration={markings, mark=between positions 0.15 and 0.95 step 0.15 with {\arrow[solid, red]{Stealth}}}] table [x=ReY1, y=ImY1, col sep=comma] {../octave/lugar_das_raizes.csv};
+        
+        % 3. Polo real rápido (Y3 em -25) - UMA ÚNICA SETA
+        \addplot [thick, red, dashed, forget plot, each nth point=499, postaction={decorate}, decoration={markings, mark=at position 0.8 with {\arrow[solid, red]{Stealth}}}] table [x=ReY3, y=ImY3, col sep=comma] {../octave/lugar_das_raizes.csv};
+        
+        % 4. Polo real na origem (Y2) - ESTÁTICO (Sem seta)
+        \addplot [thick, red, dashed, forget plot] table [x=ReY2, y=ImY2, col sep=comma] {../octave/lugar_das_raizes.csv};
+        
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Lugar das raízes do subsistema do Carro (eixo $Y$) para $l$ variando de $0{,}1$ m a $1{,}0$ m. As setas indicam o sentido de deslocamento dos polos conforme $l$ aumenta.}
+    \label{fig:root_locus_y}
+\end{figure}
+
+% ==========================================
+% GRÁFICO 3: EIXO L (Içamento)
+% ==========================================
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=0.95\linewidth,
+            height=0.95\linewidth,
+            title={\textbf{Autovalores do subsistema de Içamento}},
+            xlabel={Eixo Real ($\sigma$)},
+            ylabel={Eixo Imaginário ($j\omega$)},
+            grid=both,
+            grid style={dotted, gray!95},
+            extra x ticks={0},
+            extra x tick style={grid=major, major grid style={black, solid}},
+            extra y ticks={0},
+            extra y tick style={grid=major, major grid style={black, solid}},
+            ymin=-1, ymax=1, % Limita a altura para focar estritamente no eixo real
+            xmin=-25, xmax=5
+        ]
+        
+        % Polos fixos (independem de l). mark=x para um formato de "X" puro
+        \addplot [
+            only marks, 
+            mark=x, 
+            mark size=5pt, 
+            thick, 
+            green!60!black
+        ] coordinates {(0, 0) (-20.8237, 0)};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Lugar das raízes do subsistema de Içamento (eixo $L$). Diferentemente dos eixos horizontais, a dinâmica linear do mecanismo de elevação não possui polos atrelados ao comprimento do cabo, permanecendo estáticos.}
+    \label{fig:root_locus_l}
+\end{figure}
+
+É notável nas Figuras \ref{fig:root_locus_x} e \ref{fig:root_locus_y} que, à medida que o comprimento do cabo $l$ diminui (refletido pelo afastamento dos polos complexos em relação ao eixo real nos gráficos), a parte imaginária desses polos aumenta de maneira não linear. Fisicamente, cabos curtos impõem altas frequências de oscilação à carga, tornando o controle do guindaste consideravelmente mais desafiador.
+
+\subsection{Ponto de Operação Nominal e Desacoplamento}
+
+Para fins de projeto de controle LTI (\textit{Linear Time-Invariant}), fixa-se o comprimento do cabo em um valor de operação nominal situado no centro da faixa de operação, adotando-se $l_0 = 0{,}55$ m.
+
+Neste ponto nominal, devido à estrutura bloco-diagonal da matriz de estados $\mathbf{A}(l_0)$, o modelo de ordem $10$ se desacopla perfeitamente em três subsistemas do tipo SISO (\textit{Single-Input Single-Output}): 
+\begin{enumerate}
+    \item \textbf{Subsistema da Ponte:} Dinâmica do eixo $X$ e ângulo $\theta_x$;
+    \item \textbf{Subsistema do Carro:} Dinâmica do eixo $Y$ e ângulo $\theta_y$;
+    \item \textbf{Subsistema de Içamento:} Dinâmica linear do eixo $L$.
+\end{enumerate}
+
+Essa característica permite expressar a representação do sistema através de matrizes de transformação de similaridade. Cada subsistema pode ser analisado através de sua forma canônica Diagonal (ou de Jordan, em caso de multiplicidade), o que evidencia diretamente os modos naturais de resposta (polos integradores, reais e complexos) em sua diagonal principal.
+
+\subsubsection*{Nota Teórica sobre Funções de Transferência e a Gravidade}
+
+Antes de derivar as funções de transferência de cada subsistema a partir de suas matrizes de espaço de estados, faz-se necessária uma ponderação teórica fundamental. A formulação matricial obtida possui o formato geral:
+\begin{equation*}
+    \dot{\mathbf{x}} = \mathbf{A}\mathbf{x} + \mathbf{B}_g\mathbf{g}_0 + \mathbf{B}_F\mathbf{f}_{\text{lin}}
+\end{equation*}
+
+Por definição teórica, funções de transferência $G(s)$ modelam puramente a relação de entrada e saída da dinâmica transitória de um sistema para \textbf{condições iniciais nulas e na ausência de distúrbios externos}. O vetor da gravidade $\mathbf{g}_0 = [0, 0, -mg, 0, 0]^T$ atua no sistema de forma exógena, configurando estritamente um distúrbio constante. 
+
+Matematicamente, como as componentes de $\mathbf{g}_0$ para os eixos $X$ e $Y$ são nulas, o produto $\mathbf{B}_g\mathbf{g}_0$ tem efeito literal zero na translação horizontal da Ponte e do Carro. No subsistema de içamento $L$, a componente $-mg$ não altera os polos do sistema, servindo apenas para deslocar o ponto de equilíbrio do esforço de sustentação. Portanto, para a obtenção das funções de transferência $\frac{Y(s)}{U(s)}$ de cada subsistema, o termo $\mathbf{B}_g\mathbf{g}_0$ é sumariamente ignorado e o foco da análise recai exclusivamente sobre as matrizes $\mathbf{A}$, $\mathbf{B}_F$, $\mathbf{C}$ e $\mathbf{D}$.
+
+\subsection{Análise dos Subsistemas e Funções de Transferência}
+
+Abaixo são apresentados as equações de espaço de estados, as funções de transferência $G(s) = \mathbf{C}(s\mathbf{I} - \mathbf{A})^{-1}\mathbf{B}_F + \mathbf{D}$, e a diagonalização dos modos (autovalores) para os três subsistemas, calculados para $l_0 = 0{,}55$ m.
+
+\subsubsection{Subsistema da Ponte (Eixo $X$)}
+
+Isolando os estados associados ao eixo $X$, $\mathbf{x}_x = [\dot{x}\quad\dot{\theta}_x\quad x\quad\theta_x]^T$, com entrada $u = f_x$ e saída $y = x$, obtém-se o modelo linear de ordem 4:
+\begin{align}
+    \dot{\mathbf{x}}_x &= \mathbf{A}_x \mathbf{x}_x + \mathbf{B}_{gx}\mathbf{g}_{0x} + \mathbf{B}_{Fx} f_x \nonumber \\
+    y_x &= \mathbf{C}_x \mathbf{x}_x + D_x f_x
+\end{align}
+cujas submatrizes nominais, extraídas do modelo geral, resultam em:
+\begin{align*}
+    \mathbf{A}_x &= \begin{bmatrix} -\frac{D_x}{M_x} & 0 & 0 & \frac{mg}{M_x} \\[6pt] \frac{D_x}{M_x l_0} & 0 & 0 & -\frac{g(M_x+m)}{M_x l_0} \\[6pt] 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \end{bmatrix}, & 
+    \mathbf{B}_{Fx} &= \begin{bmatrix} \frac{1}{M_x} \\[6pt] -\frac{1}{M_x l_0} \\[6pt] 0 \\ 0 \end{bmatrix} \\
+    \mathbf{C}_x &= \begin{bmatrix} 0 & 0 & 1 & 0 \end{bmatrix}, & 
+    D_x &= 0
+\end{align*}
+
+Conforme fundamentado, como o componente de $\mathbf{g}_0$ atrelado ao grau de liberdade $x$ é nulo ($\mathbf{g}_{0x} = 0$), a dinâmica transitória de malha aberta origina a seguinte função de transferência:
+\begin{equation}
+    G_x(s) = \frac{X(s)}{F_x(s)} = \frac{0{,}006749 s^2 + 0{,}1204}{s^4 + 16{,}71 s^3 + 18{,}54 s^2 + 298 s}
+\end{equation}
+
+Os modos naturais do subsistema podem ser observados através dos autovalores na diagonal de sua matriz de Jordan numérica $\mathbf{J}_x$:
+\begin{equation}
+    \text{diag}(\mathbf{J}_x) = \mathbf{\lambda}_{x} = \begin{cases}
+        0 \\
+        -16{,}6699 \\
+        -0{,}0197 \pm 4{,}2283j
+    \end{cases}
+\end{equation}
+
+\subsubsection{Subsistema do Carro (Eixo $Y$)}
+
+De forma análoga, para os estados $\mathbf{x}_y = [\dot{y}\quad\dot{\theta}_y\quad y\quad\theta_y]^T$, com entrada $u = f_y$ e saída $y = y$:
+\begin{align}
+    \dot{\mathbf{x}}_y &= \mathbf{A}_y \mathbf{x}_y + \mathbf{B}_{gy}\mathbf{g}_{0y} + \mathbf{B}_{Fy} f_y \nonumber \\
+    y_y &= \mathbf{C}_y \mathbf{x}_y + D_y f_y
+\end{align}
+onde:
+\begin{align*}
+    \mathbf{A}_y &= \begin{bmatrix} -\frac{D_y}{M_y} & 0 & 0 & \frac{mg}{M_y} \\[6pt] \frac{D_y}{M_y l_0} & 0 & 0 & -\frac{g(M_y+m)}{M_y l_0} \\[6pt] 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \end{bmatrix}, & 
+    \mathbf{B}_{Fy} &= \begin{bmatrix} \frac{1}{M_y} \\[6pt] -\frac{1}{M_y l_0} \\[6pt] 0 \\ 0 \end{bmatrix} \\
+    \mathbf{C}_y &= \begin{bmatrix} 0 & 0 & 1 & 0 \end{bmatrix}, & 
+    D_y &= 0
+\end{align*}
+
+Novamente com $\mathbf{g}_{0y} = 0$, a função de transferência e os autovalores da matriz $\mathbf{J}_y$ são obtidos como:
+\begin{equation}
+    G_y(s) = \frac{Y(s)}{F_y(s)} = \frac{0{,}006491 s^2 + 0{,}1158}{s^4 + 25{,}97 s^3 + 18{,}51 s^2 + 463{,}1 s}
+\end{equation}
+\begin{equation}
+    \text{diag}(\mathbf{J}_y) = \mathbf{\lambda}_{y} = \begin{cases}
+        0 \\
+        -25{,}9403 \\
+        -0{,}0127 \pm 4{,}2254j
+    \end{cases}
+\end{equation}
+
+É possível notar, tanto no eixo $X$ quanto no eixo $Y$, a presença de um polo integrador na origem, um polo dominante fortemente amortecido atrelado ao atrito estrutural, e um par de polos complexos conjugados referentes à oscilação da carga de massa $m$.
+
+\subsubsection{Subsistema de Içamento (Eixo $L$)}
+
+Por fim, a dinâmica linear de levantamento da carga restringe-se ao vetor de estados $\mathbf{x}_l = [\dot{l}\quad l]^T$. Adotando a força do guincho $f_l$ como entrada e $l$ como saída:
+\begin{align}
+    \dot{\mathbf{x}}_l &= \mathbf{A}_l \mathbf{x}_l + \mathbf{B}_{gl}g_{0l} + \mathbf{B}_{Fl} f_l \nonumber \\
+    y_l &= \mathbf{C}_l \mathbf{x}_l + D_l f_l
+\end{align}
+onde:
+\begin{align*}
+    \mathbf{A}_l &= \begin{bmatrix} -\frac{D_l}{M_l+m} & 0 \\[6pt] 1 & 0 \end{bmatrix}, \quad 
+    \mathbf{B}_{Fl} = \begin{bmatrix} \frac{1}{M_l+m} \\[6pt] 0 \end{bmatrix} \\
+    \mathbf{B}_{gl} &= \begin{bmatrix} -\frac{1}{M_l+m} \\[6pt] 0 \end{bmatrix}, \quad
+    g_{0l} = -mg \\
+    \mathbf{C}_l &= \begin{bmatrix} 0 & 1 \end{bmatrix}, \quad D_l = 0
+\end{align*}
+
+Embora o esforço constante da gravidade atue ativamente neste eixo ($\mathbf{B}_{gl}g_{0l} \neq 0$), ele não exerce influência na determinação da função de transferência transitória da malha, que se apresenta como um sistema puro de segunda ordem superamortecido:
+\begin{equation}
+    G_l(s) = \frac{L(s)}{F_l(s)} = \frac{0{,}007148}{s^2 + 20{,}82 s}
+\end{equation}
+
+Os modos naturais que compõem a matriz $\mathbf{J}_l$ revelam ausência de oscilação, concentrando-se puramente no eixo real:
+\begin{equation}
+    \text{diag}(\mathbf{J}_l) = \mathbf{\lambda}_{l} = \begin{cases}
+        0 \\
+        -20{,}8237
+    \end{cases}
+\end{equation}
 
 \section{Resposta do Sistema em Malha Aberta}
 
