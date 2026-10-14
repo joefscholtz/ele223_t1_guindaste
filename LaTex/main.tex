@@ -28,7 +28,7 @@
 
 \begin{document}
 
-\title{Modelagem e Linearização de Guindastes do tipo Ponte}
+\title{Modelagem, Linearização e Controle por Realimentação de Estados de Guindastes do tipo Ponte}
 
 \author{
   Joe Ferreira Scholtz\\
@@ -47,7 +47,24 @@ Ponte Rolante, Pórtico, Modelagem de sistemas mecânicos, Linearização em tor
 \end{IEEEkeywords}
 
 \section{Introdução}
-blablabla
+definir o que é esta bosta;
+explicar a importância pelas aplicações;
+diferenciar os tipos pela norma\cite{thiago2026};
+explicar o motivo do pq é importante formular uma boa abordagem de controle;
+caracterizar melhor a dinâmica do sistema de forma qualitativa, citar alguém que já diz que ele é altamente não linear.
+
+\subsection{Obetivos Gerais}
+vamos considerar apenas o sistema mecânico, sem levar em conta a dinâmica dos atuadores, independente de sua natureza (e.g. elétrica ou hidráulica);
+modelagens lineares possuem métodos de controle muito mais diversos e simples, almeja-se que as formulações do presente trabalho sirvam como aparato para estressar o desempenho de tais estratégias, ou pelo menos um subconjunto delas, sujeitas a uma margem de erro em relação ao comportamento não linear do sistema.
+\subsubsection{Objetivos Específicos}
+blabla grande o suficiente pra ocupar duas ou três linhas porque a formatação vai ficar melhor na minha opinião
+\begin{enumerate}
+  \item Modelar o sistema mecânico da ponte rolante de um ponte de vista geométrico, cinemático e dinâmico;
+  \item Esse é um sistema cuja dinâmica notoriamente não linear, portanto, obter uma aproximação do modelo dinâmico em torno de um ponto de equilíbrio;
+  \item A partir da aproximação do modelo, obter uma caracterização LPV;
+  \item Por fim, obter uma formulação em espaço de estados e realizar análises do comportamento do sistema em forma LPV e em aproximações LTI.
+\end{enumerate}
+
 \section{Modelagem do sistema}
 
 Uma ponte rolante, representada na Figura \ref{fig:crane_tikz} , pode ser vista como o seguinte conjunto de estruturas: 
