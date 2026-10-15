@@ -47,17 +47,19 @@ Ponte Rolante, Pórtico, Modelagem de sistemas mecânicos, Linearização em tor
 \end{IEEEkeywords}
 
 \section{Introdução}
-definir o que é esta bosta;
-explicar a importância pelas aplicações;
-diferenciar os tipos pela norma\cite{thiago2026};
-explicar o motivo do pq é importante formular uma boa abordagem de controle;
-caracterizar melhor a dinâmica do sistema de forma qualitativa, citar alguém que já diz que ele é altamente não linear.
+
+Uma parcela substancial do transporte de cargas pesadas ou periculosas em ambientes delimitados como, por exemplo, portos e pavilhões industriais de manufatura ou logística, são realizadas por guindastes do tipo ponte, devido à sua flexibilidade operacional. Tais equipamentos consistem em uma plataforma móvel transportando um sistema de içamento com carga suspensa por cabos. Mais precisamente, a norma \cite{ISO4306_1_2007} define três classes principais conforme a estrutura de suporte: a ponte rolante, com ponte apoiada em trilhos elevados; o pórtico, com pernas que se deslocam sobre trilhos no solo; e o semi-pórtico, que combina trilho elevado de um lado e pernas do outro. Destas classes derivam configurações especializadas, como os guindastes de terminal portuário \cite{thiago2026}.
+
+Par além da relevância econômica e operacional da vasta gama de aplicações em que esse equipamento é utilizado, a importância de estudo de tais sistemas também é fortemente corroboradas pela dificuldade de operação pelas consequências de má operação: dado que essas máquinas operam normalmente com cargas perigosas, acidentes e colisões geram risco de danos materiais e à vida humana.
+
+A dificuldade de operação, por sua vez, é proveniente de características intrínsecas à física dessas máquinas. Guindastes do tipo ponte são sistemas subatuados (número de graus de liberdade inferior à quantidade de juntas atuadas), com dinâmica não linear e acoplamento entre os graus de liberdade \cite{lee}.
+
+Por esses motivos, é indispensável um aprofundamento na análise desse tipo de tipo de sistema, e propostas de abordagem de controle em malha fechada efetivas.
 
 \subsection{Obetivos Gerais}
-vamos considerar apenas o sistema mecânico, sem levar em conta a dinâmica dos atuadores, independente de sua natureza (e.g. elétrica ou hidráulica);
-modelagens lineares possuem métodos de controle muito mais diversos e simples, almeja-se que as formulações do presente trabalho sirvam como aparato para estressar o desempenho de tais estratégias, ou pelo menos um subconjunto delas, sujeitas a uma margem de erro em relação ao comportamento não linear do sistema.
+No presente trabalho, será abordada a modelagem matemática e análise crítica do comportamento resultante. Será considerado apenas o sistema mecânico, sem levar em conta a dinâmica dos atuadores, independente de sua natureza (e.g. elétrica ou hidráulica). E serão aprofundadas técnicas de sistemas LTI, uma vez que possuem métodos de controle muito mais diversos e simples. Almeja-se que as formulações do presente trabalho sirvam como aparato para estressar o desempenho de tais estratégias, ou pelo menos um subconjunto delas, sujeitas a uma margem de erro em relação ao comportamento não linear do sistema.
 \subsubsection{Objetivos Específicos}
-blabla grande o suficiente pra ocupar duas ou três linhas porque a formatação vai ficar melhor na minha opinião
+De forma mais exaustiva, o presente trabalho será estruturado a partir das seguintes etapas:
 \begin{enumerate}
   \item Modelar o sistema mecânico da ponte rolante de um ponte de vista geométrico, cinemático e dinâmico;
   \item Esse é um sistema cuja dinâmica notoriamente não linear, portanto, obter uma aproximação do modelo dinâmico em torno de um ponto de equilíbrio;
@@ -560,7 +562,7 @@ Para avaliar a estabilidade e a mudança dos modos do sistema perante o içament
       \hline
     \end{tabular}
   \end{center}
-  \caption{Valor dos parâmetros do modelo. Fonte: Dados de estimação obtidos em \cite{thiago2026}}
+  \caption{Valor dos parâmetros do modelo. Fonte: Resultados de estimação obtidos em \cite{thiago2026}}
   \label{tab:and_xor_distributive}
 \end{table}
 
